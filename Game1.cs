@@ -9,7 +9,10 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
-    private Texture2D _sneed;
+    private Texture2D ballTex;
+    private Texture2D paddleTex;
+    public readonly Vector2 ScreenSize = new Vector2(240, 160);
+    public Vector2 Position = new Vector2(0, 0);
     private RenderTarget2D _mainRenderTarget;
 
     public Game1()
@@ -26,14 +29,17 @@ public class Game1 : Game
     {
         // TODO: Add your initialization logic here
         _mainRenderTarget = new RenderTarget2D(GraphicsDevice, 240, 160);
+        Position = ScreenSize / 2;
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        
-        _sneed = Content.Load<Texture2D>("Textures/FuckedMiyamoto");
+
+        ballTex = Content.Load<Texture2D>("Textures/FuckedMiyamoto");
+        paddleTex = Content.Load<Texture2D>("Textures/Paddle");
+
 
         // TODO: use this.Content to load your game content here
     }
@@ -43,19 +49,26 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        // TODO: Add your update logic here
-
+        // Position.X += -80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        
+        if (Keyboard.GetState().IsKeyDown(Keys.Up))
+        {
+            Position.Y += -80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        }
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(Color.Black);
 
         // TODO: Add your drawing code here
+        float size = 20;
+
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _spriteBatch.Draw(_sneed, new Rectangle(100, 50, 20, 20), Color.White);
+        _spriteBatch.Draw(ballTex, new Rectangle((int)(Position.X - size / 2) , (int)(Position.Y - size / 2), (int)size, (int)size), Color.White);
+        _spriteBatch.Draw(paddleTex, new Vector2(5, ScreenSize.Y / 2 - paddleTex.Height / 2), Color.White);
         _spriteBatch.End();
         
         GraphicsDevice.SetRenderTarget(null);
