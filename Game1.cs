@@ -61,23 +61,9 @@ public class Game1 : Game
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        _mainCamera.Angle += (float)Math.PI * 0.5f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        
         // Update scene objects
         _playerPaddle.Update(gameTime);
         _ball.Update(gameTime);
-        
-        // Camera movement test
-        Vector2 directionInput;
-        directionInput.Y =  (Keyboard.GetState().IsKeyDown(Keys.Up) ? -1 : 0) +
-                            (Keyboard.GetState().IsKeyDown(Keys.Down) ? 1 : 0);
-        directionInput.X =  (Keyboard.GetState().IsKeyDown(Keys.Left) ? -1 : 0) +
-                            (Keyboard.GetState().IsKeyDown(Keys.Right) ? 1 : 0);
-        if (directionInput.LengthSquared() > 0)
-        {
-            directionInput /= directionInput.Length();
-            _mainCamera.Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        }
 
         base.Update(gameTime);
     }
