@@ -12,6 +12,9 @@ public class Game1 : Game
     public static Vector2 ScreenSize = new Vector2(240, 160);
     private RenderTarget2D _mainRenderTarget;
 
+    private PlayerPaddle PlayerPaddle = new PlayerPaddle();
+    private Ball Ball = new Ball();
+
     public static ContentManager ContentManager;
     
     public Game1()
