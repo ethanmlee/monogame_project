@@ -15,6 +15,6 @@ public class PlayerPaddle : Entity
     
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(_paddleTex, new Vector2(5, Game1.ScreenSize.Y / 2f - _paddleTex.Height / 2f), Color.White);
+        spriteBatch.Draw(_paddleTex, new Vector2(5, 80 - _paddleTex.Height / 2f), Color.White);
     }
 }
