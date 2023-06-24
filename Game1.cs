@@ -13,12 +13,13 @@ public class Game1 : Game
     public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
     private RenderTarget2D _mainRenderTarget;
 
-    private readonly PlayerPaddle _playerPaddle = new PlayerPaddle();
-    private readonly Ball _ball = new Ball();
+    public static readonly PlayerPaddle PlayerPaddle1 = new PlayerPaddle(0);
+    public static readonly PlayerPaddle PlayerPaddle2 = new PlayerPaddle(1);
+    public static readonly Ball Ball = new Ball();
 
     public static ContentManager ContentManager;
 
-    private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0f, 160);
+    private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0.0f, 160);
 
     public Game1()
     {
@@ -51,8 +52,9 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _playerPaddle.LoadContent();
-        _ball.LoadContent();
+        PlayerPaddle1.LoadContent();
+        PlayerPaddle2.LoadContent();
+        Ball.LoadContent();
     }
 
     protected override void Update(GameTime gameTime)
@@ -62,8 +64,9 @@ public class Game1 : Game
             Exit();
 
         // Update scene objects
-        _playerPaddle.Update(gameTime);
-        _ball.Update(gameTime);
+        PlayerPaddle1.Update(gameTime);
+        PlayerPaddle2.Update(gameTime);
+        Ball.Update(gameTime);
 
         base.Update(gameTime);
     }
@@ -83,8 +86,9 @@ public class Game1 : Game
         GraphicsDevice.Clear(new Color(100, 34, 125));
         
         // Draw scene objects
-        _playerPaddle.Draw(gameTime, _spriteBatch);
-        _ball.Draw(gameTime, _spriteBatch);
+        PlayerPaddle1.Draw(gameTime, _spriteBatch);
+        PlayerPaddle2.Draw(gameTime, _spriteBatch);
+        Ball.Draw(gameTime, _spriteBatch);
         
         // End drawing
         _spriteBatch.End();
