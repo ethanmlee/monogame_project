@@ -9,11 +9,16 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
+    private Texture2D _cow;
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        _graphics.PreferredBackBufferWidth = 1920;
+        _graphics.PreferredBackBufferHeight = 1080;
+        _graphics.ApplyChanges();
     }
 
     protected override void Initialize()
@@ -26,6 +31,8 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+        _cow = Content.Load<Texture2D>("cow");
 
         // TODO: use this.Content to load your game content here
     }
@@ -45,7 +52,10 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         // TODO: Add your drawing code here
-
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(_cow, new Vector2(128, 128), Color.White);
+        _spriteBatch.End();
+        
         base.Draw(gameTime);
     }
 }
