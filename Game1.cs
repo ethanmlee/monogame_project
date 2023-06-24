@@ -10,28 +10,29 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private Texture2D _sneed;
+    private RenderTarget2D _mainRenderTarget;
 
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-        _graphics.PreferredBackBufferWidth = 240;
-        _graphics.PreferredBackBufferHeight = 160;
+        _graphics.PreferredBackBufferWidth = 240 * 10;
+        _graphics.PreferredBackBufferHeight = 160 * 10;
         _graphics.ApplyChanges();
     }
 
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
-
+        _mainRenderTarget = new RenderTarget2D(GraphicsDevice, 240, 160);
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
+        
         _sneed = Content.Load<Texture2D>("Textures/FuckedMiyamoto");
 
         // TODO: use this.Content to load your game content here
@@ -52,10 +53,16 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         // TODO: Add your drawing code here
-        _spriteBatch.Begin();
-        _spriteBatch.Draw(_sneed, new Vector2(128, 128), Color.White);
+        GraphicsDevice.SetRenderTarget(_mainRenderTarget);
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Draw(_sneed, new Rectangle(100, 50, 20, 20), Color.White);
         _spriteBatch.End();
         
+        GraphicsDevice.SetRenderTarget(null);
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Draw(_mainRenderTarget, GraphicsDevice.Viewport.Bounds, Color.White);
+        _spriteBatch.End();
+
         base.Draw(gameTime);
     }
 }
