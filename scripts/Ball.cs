@@ -1,7 +1,5 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace monogame_project;
 public class Ball : Entity
@@ -20,7 +18,15 @@ public class Ball : Entity
 
     public override void Update(GameTime gameTime)
     {
-        base.Update(gameTime);
+        Vector2 directionInput = new Vector2();
+        directionInput.Y =  0;
+        directionInput.X =  -1f;
+
+        if (directionInput.LengthSquared() > 0)
+        {
+            directionInput /= directionInput.Length();
+            Position += directionInput * 60 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        }
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -30,4 +36,3 @@ public class Ball : Entity
             size / _ballTex.Height, SpriteEffects.None, 0);
     }
 }
-
