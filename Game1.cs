@@ -8,11 +8,7 @@ public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-
-    private Texture2D ballTex;
-    private Texture2D paddleTex;
-    public readonly Vector2 ScreenSize = new Vector2(240, 160);
-    public Vector2 Position = new Vector2(0, 0);
+    public static Vector2 ScreenSize = new Vector2(240, 160);
     private RenderTarget2D _mainRenderTarget;
 
     public Game1()
@@ -29,17 +25,12 @@ public class Game1 : Game
     {
         // TODO: Add your initialization logic here
         _mainRenderTarget = new RenderTarget2D(GraphicsDevice, 240, 160);
-        Position = ScreenSize / 2;
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        ballTex = Content.Load<Texture2D>("Textures/FuckedMiyamoto");
-        paddleTex = Content.Load<Texture2D>("Textures/Paddle");
-
 
         // TODO: use this.Content to load your game content here
     }
@@ -49,16 +40,16 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        Vector2 directionInput;
-        directionInput.Y =  (Keyboard.GetState().IsKeyDown(Keys.Up) ? -1 : 0) +
-                            (Keyboard.GetState().IsKeyDown(Keys.Down) ? 1 : 0);
-        directionInput.X =  (Keyboard.GetState().IsKeyDown(Keys.Left) ? -1 : 0) +
-                            (Keyboard.GetState().IsKeyDown(Keys.Right) ? 1 : 0);
-        if (directionInput.LengthSquared() > 0)
-        {
-            directionInput /= directionInput.Length();
-            Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        }
+        // Vector2 directionInput;
+        // directionInput.Y =  (Keyboard.GetState().IsKeyDown(Keys.Up) ? -1 : 0) +
+        //                     (Keyboard.GetState().IsKeyDown(Keys.Down) ? 1 : 0);
+        // directionInput.X =  (Keyboard.GetState().IsKeyDown(Keys.Left) ? -1 : 0) +
+        //                     (Keyboard.GetState().IsKeyDown(Keys.Right) ? 1 : 0);
+        // if (directionInput.LengthSquared() > 0)
+        // {
+        //     directionInput /= directionInput.Length();
+        //     Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        // }
 
         base.Update(gameTime);
     }
@@ -68,12 +59,8 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.Black);
 
         // TODO: Add your drawing code here
-        float size = 20;
-
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _spriteBatch.Draw(ballTex, new Rectangle((int)(Position.X - size / 2) , (int)(Position.Y - size / 2), (int)size, (int)size), Color.White);
-        _spriteBatch.Draw(paddleTex, new Vector2(5, ScreenSize.Y / 2 - paddleTex.Height / 2), Color.White);
         _spriteBatch.End();
         
         GraphicsDevice.SetRenderTarget(null);
