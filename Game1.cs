@@ -9,6 +9,7 @@ public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
+    // The resolution the camera should render at, separate from the size
     public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
     private RenderTarget2D _mainRenderTarget;
 
@@ -17,7 +18,7 @@ public class Game1 : Game
 
     public static ContentManager ContentManager;
 
-    private readonly Camera _mainCamera = new Camera(Vector2.Zero, 0f, 160);
+    private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0f, 160);
 
     public Game1()
     {
@@ -28,6 +29,8 @@ public class Game1 : Game
         TargetElapsedTime = TimeSpan.FromSeconds(1f/60f);
         IsFixedTimeStep = true;
         _graphics.SynchronizeWithVerticalRetrace = false;
+        
+        // Sets the window size
         _graphics.PreferredBackBufferWidth = 240 * 10;
         _graphics.PreferredBackBufferHeight = 160 * 10;
         _graphics.ApplyChanges();
@@ -57,6 +60,8 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
+
+        _mainCamera.Angle += (float)Math.PI * 0.5f * (float)gameTime.ElapsedGameTime.TotalSeconds;
         
         // Update scene objects
         _playerPaddle.Update(gameTime);
@@ -71,7 +76,7 @@ public class Game1 : Game
         if (directionInput.LengthSquared() > 0)
         {
             directionInput /= directionInput.Length();
-            _mainCamera.Position += -directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _mainCamera.Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
 
         base.Update(gameTime);
