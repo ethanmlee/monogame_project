@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using monogame_project;
 
 public class Ball : Entity
 {
@@ -10,7 +11,7 @@ public class Ball : Entity
     public override void LoadContent()
     {
         base.LoadContent();
-        // ballTex = Content.Load<Texture2D>("Textures/FuckedMiyamoto");
+        ballTex = Game1.ContentManager.Load<Texture2D>("Textures/FuckedMiyamoto");
     }
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {

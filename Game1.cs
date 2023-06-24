@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -11,8 +12,11 @@ public class Game1 : Game
     public static Vector2 ScreenSize = new Vector2(240, 160);
     private RenderTarget2D _mainRenderTarget;
 
+    public static ContentManager ContentManager;
+    
     public Game1()
     {
+        ContentManager = Content;
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;

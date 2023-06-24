@@ -11,7 +11,7 @@ public class PlayerPaddle : Entity
     public override void LoadContent()
     {
         base.LoadContent();
-        // paddleTex = Content.Load<Texture2D>("Textures/Paddle");
+        paddleTex = Game1.ContentManager.Load<Texture2D>("Textures/Paddle");
     }
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
