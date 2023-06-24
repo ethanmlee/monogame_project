@@ -16,8 +16,8 @@ public class Game1 : Game
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-        _graphics.PreferredBackBufferWidth = 1920;
-        _graphics.PreferredBackBufferHeight = 1080;
+        _graphics.PreferredBackBufferWidth = 240;
+        _graphics.PreferredBackBufferHeight = 160;
         _graphics.ApplyChanges();
     }
 
@@ -32,7 +32,7 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        _sneed = Content.Load<Texture2D>("sneed");
+        _sneed = Content.Load<Texture2D>("Textures/FuckedMiyamoto");
 
         // TODO: use this.Content to load your game content here
     }
