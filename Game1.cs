@@ -9,7 +9,7 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
-    private Texture2D _cow;
+    private Texture2D _sneed;
 
     public Game1()
     {
@@ -32,7 +32,7 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        _cow = Content.Load<Texture2D>("cow");
+        _sneed = Content.Load<Texture2D>("sneed");
 
         // TODO: use this.Content to load your game content here
     }
@@ -53,7 +53,7 @@ public class Game1 : Game
 
         // TODO: Add your drawing code here
         _spriteBatch.Begin();
-        _spriteBatch.Draw(_cow, new Vector2(128, 128), Color.White);
+        _spriteBatch.Draw(_sneed, new Vector2(128, 128), Color.White);
         _spriteBatch.End();
         
         base.Draw(gameTime);
