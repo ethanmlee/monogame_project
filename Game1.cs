@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace monogame_project;
-
 public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
@@ -12,8 +11,8 @@ public class Game1 : Game
     public static Vector2 ScreenSize = new Vector2(240, 160);
     private RenderTarget2D _mainRenderTarget;
 
-    private PlayerPaddle PlayerPaddle = new PlayerPaddle();
-    private Ball Ball = new Ball();
+    private readonly PlayerPaddle _playerPaddle = new PlayerPaddle();
+    private readonly Ball _ball = new Ball();
 
     public static ContentManager ContentManager;
     
@@ -30,7 +29,6 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
         _mainRenderTarget = new RenderTarget2D(GraphicsDevice, 240, 160);
         base.Initialize();
     }
@@ -38,25 +36,19 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        // TODO: use this.Content to load your game content here
+        
+        _playerPaddle.LoadContent();
+        _ball.LoadContent();
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+            Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
-
-        // Vector2 directionInput;
-        // directionInput.Y =  (Keyboard.GetState().IsKeyDown(Keys.Up) ? -1 : 0) +
-        //                     (Keyboard.GetState().IsKeyDown(Keys.Down) ? 1 : 0);
-        // directionInput.X =  (Keyboard.GetState().IsKeyDown(Keys.Left) ? -1 : 0) +
-        //                     (Keyboard.GetState().IsKeyDown(Keys.Right) ? 1 : 0);
-        // if (directionInput.LengthSquared() > 0)
-        // {
-        //     directionInput /= directionInput.Length();
-        //     Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        // }
+        
+        _playerPaddle.Update(gameTime);
+        _ball.Update(gameTime);
 
         base.Update(gameTime);
     }
@@ -65,9 +57,10 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.Black);
 
-        // TODO: Add your drawing code here
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin();
+        _playerPaddle.Draw(gameTime, _spriteBatch);
+        _ball.Draw(gameTime, _spriteBatch);
         _spriteBatch.End();
         
         GraphicsDevice.SetRenderTarget(null);
