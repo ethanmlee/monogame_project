@@ -36,4 +36,3 @@ public class Ball : Entity
             size / _ballTex.Height, SpriteEffects.None, 0);
     }
 }
-
