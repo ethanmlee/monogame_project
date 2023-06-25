@@ -98,8 +98,11 @@ public class Game1 : Game
         PlayerPaddle1.Draw(gameTime, _spriteBatch);
         PlayerPaddle2.Draw(gameTime, _spriteBatch);
         Ball.Draw(gameTime, _spriteBatch);
-        DebugManager.Draw(_spriteBatch);
         // End drawing
+        _spriteBatch.End();
+        
+        _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
+        DebugManager.Draw(_spriteBatch);
         _spriteBatch.End();
     }
 
