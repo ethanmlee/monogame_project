@@ -21,7 +21,6 @@ public class Game1 : Game
 
     public static ContentManager ContentManager;
 
-    private float _testZoom = 1;
     private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0, 160);
 
     public Game1()
@@ -67,12 +66,6 @@ public class Game1 : Game
             Exit();
         if (Keyboard.GetState().IsKeyDown(Keys.F3))
             DebugManager.ShowCollisionRectangles = true;
-
-        if (Keyboard.GetState().IsKeyDown(Keys.O))
-            _testZoom += (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (Keyboard.GetState().IsKeyDown(Keys.P))
-            _testZoom -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-        _mainCamera.Zoom = 160 * _testZoom;
 
         // Update scene objects
         PlayerPaddle1.Update(gameTime);
