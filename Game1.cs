@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PixelOven.Debug;
 
 namespace monogame_project;
 public class Game1 : Game
 {
-    private GraphicsDeviceManager _graphics;
+    public static GraphicsDeviceManager Graphics;
     private SpriteBatch _spriteBatch;
     // The resolution the camera should render at, separate from the size
     public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
@@ -19,31 +21,31 @@ public class Game1 : Game
 
     public static ContentManager ContentManager;
 
-    private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0.0f, 160);
+    private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0, 160);
 
     public Game1()
     {
         ContentManager = Content;
-        _graphics = new GraphicsDeviceManager(this);
+        Graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         TargetElapsedTime = TimeSpan.FromSeconds(1f/60f);
         IsFixedTimeStep = true;
-        _graphics.SynchronizeWithVerticalRetrace = false;
+        Graphics.SynchronizeWithVerticalRetrace = false;
         
         // Sets the window size
-        _graphics.PreferredBackBufferWidth = 240 * 10;
-        _graphics.PreferredBackBufferHeight = 160 * 10;
-        _graphics.ApplyChanges();
+        Graphics.PreferredBackBufferWidth = 240 * 10;
+        Graphics.PreferredBackBufferHeight = 160 * 10;
+        Graphics.ApplyChanges();
     }
 
     protected override void Initialize()
     {
         _mainRenderTarget = new RenderTarget2D(GraphicsDevice, (int)RenderResolution.X, (int)RenderResolution.Y);
-        _graphics.PreparingDeviceSettings += ( sender,  args) =>
+        Graphics.PreparingDeviceSettings += ( sender,  args) =>
         {
-            _graphics.PreferMultiSampling = true;
-            _graphics.GraphicsDevice.PresentationParameters.MultiSampleCount = 4;
+            Graphics.PreferMultiSampling = true;
+            Graphics.GraphicsDevice.PresentationParameters.MultiSampleCount = 4;
         };
         
         base.Initialize();
@@ -62,6 +64,8 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
+        if (Keyboard.GetState().IsKeyDown(Keys.F3))
+            DebugManager.ShowCollisionRectangles = true;
 
         // Update scene objects
         PlayerPaddle1.Update(gameTime);
@@ -82,14 +86,14 @@ public class Game1 : Game
     {
         // Setup drawing
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
-        _spriteBatch.Begin(transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
         GraphicsDevice.Clear(new Color(100, 34, 125));
         
         // Draw scene objects
         PlayerPaddle1.Draw(gameTime, _spriteBatch);
         PlayerPaddle2.Draw(gameTime, _spriteBatch);
         Ball.Draw(gameTime, _spriteBatch);
-        
+        DebugManager.Draw(_spriteBatch);
         // End drawing
         _spriteBatch.End();
     }

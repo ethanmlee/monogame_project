@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Input;
 namespace monogame_project;
 public class PlayerPaddle : Entity
 {
-    public Vector2 Position;
     private static Texture2D _paddleTex;
 
     public int PlayerIndex = 0;
@@ -22,7 +21,7 @@ public class PlayerPaddle : Entity
         base.LoadContent();
         _paddleTex ??= Game1.ContentManager.Load<Texture2D>("Textures/Paddle");
 
-        BoundingBox = new BoundingBox(new Vector2(PlayerIndex == 0 ? 0 : 10, 0), new Vector2(6, 32));
+        BoundingBox = new BoundingBox(this, new Vector2(PlayerIndex == 0 ? 0 : 10, 0), new Vector2(6, 32));
         int playerX = (PlayerIndex == 0) ? 5 : 240 - 5 - _paddleTex.Width;
         Position = new Vector2(playerX, 80 - _paddleTex.Height / 2f);
     }
@@ -47,14 +46,13 @@ public class PlayerPaddle : Entity
         {
             HitBall(Game1.Ball);
         }
-
-        BoundingBox.Position = Position;
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         spriteBatch.Draw(_paddleTex, Position, null, Color.White, 0, Vector2.Zero, Vector2.One,
             PlayerIndex == 0 ? SpriteEffects.None : SpriteEffects.FlipHorizontally, 0);
+        BoundingBox.Draw(spriteBatch);
     }
     
     public void HitBall(Ball ball)

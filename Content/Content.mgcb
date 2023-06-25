@@ -13,6 +13,53 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Fonts/debugOverlay.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/debugOverlay.spritefont
+
+#begin Fonts/m3x6.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/m3x6.spritefont
+
+#begin Fonts/m3x6.ttf
+/copy:Fonts/m3x6.ttf
+
+#begin Fonts/monogramextended.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/monogramextended.spritefont
+
+#begin Fonts/monogramextended.ttf
+/copy:Fonts/monogramextended.ttf
+
+#begin Fonts/OpenDyslexic.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/OpenDyslexic.spritefont
+
+#begin Fonts/OpenDyslexic.ttf
+/copy:Fonts/OpenDyslexic.ttf
+
+#begin Fonts/ThaleahFat.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Fonts/ThaleahFat.spritefont
+
+#begin Fonts/ThaleahFat.ttf
+/copy:Fonts/ThaleahFat.ttf
+
 #begin Textures/cow.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -48,6 +95,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Textures/Paddle.png
+
+#begin Textures/Pixel.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Textures/Pixel.png
 
 #begin Textures/sneed.jpg
 /importer:TextureImporter
