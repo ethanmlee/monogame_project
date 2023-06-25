@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{1c628195-092f-4781-8b12-5fd39ae92616}">
+		<property name="assetPath">
+			<value>FaucetDrip.ogg</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>25.716054421768707</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{c66b6237-9f00-41ae-86e7-89d26678ddbd}</destination>
+		</relationship>
+	</object>
+</objects>

@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -8,14 +9,15 @@ public class Ball : Entity
     
     public BoundingBox BoundingBox;
 
-    public Vector2 Direction = Vector2.UnitY;
+    public Vector2 Direction = -Vector2.UnitX;
+    private float _angle = 0f;
+    public float SpinSpeed = 0f;
     
     public override void LoadContent()
     {
         base.LoadContent();
-        _ballTex ??= Game1.ContentManager.Load<Texture2D>("Textures/FuckedMiyamoto");
+        _ballTex ??= Game1.ContentManager.Load<Texture2D>("Textures/DustGuy");
 
-        // Position = Game1.ScreenSize / 2f;
         Position = new Vector2(240, 160) / 2f;
         
         BoundingBox = new BoundingBox(this, Vector2.One * -4f, Vector2.One * 8);
@@ -27,16 +29,21 @@ public class Ball : Entity
 
         if (directionInput.LengthSquared() > 0)
         {
-            directionInput /= directionInput.Length();
-            Position += directionInput * 60 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            // directionInput /= directionInput.Length();
+            Position += directionInput * 90 * (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
+        
+        if (BoundingBox.Top < 0 && Direction.Y < 0) Direction.Y *= -1;
+        if (BoundingBox.Bottom > 160 && Direction.Y > 0) Direction.Y *= -1;
+
+        _angle += MathF.PI * SpinSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         const float size = 10;
-        spriteBatch.Draw(_ballTex, Position, null, Color.White, 0f, Vector2.One * _ballTex.Height / 2f,
-            size / _ballTex.Height, SpriteEffects.None, 0);
+        spriteBatch.Draw(_ballTex, Position, null, Color.White, _angle, _ballTex.Bounds.Size.ToVector2() / 2f,
+            1, SpriteEffects.None, 0);
         BoundingBox.Draw(spriteBatch);
     }
 }

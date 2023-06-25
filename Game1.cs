@@ -15,6 +15,8 @@ public class Game1 : Game
     public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
     private RenderTarget2D _mainRenderTarget;
 
+    private Texture2D _bgBathroomTex;
+    
     public static readonly PlayerPaddle PlayerPaddle1 = new PlayerPaddle(0);
     public static readonly PlayerPaddle PlayerPaddle2 = new PlayerPaddle(1);
     public static readonly Ball Ball = new Ball();
@@ -54,6 +56,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _bgBathroomTex = ContentManager.Load<Texture2D>("Textures/BG_Bathroom");
         PlayerPaddle1.LoadContent();
         PlayerPaddle2.LoadContent();
         Ball.LoadContent();
@@ -87,7 +90,8 @@ public class Game1 : Game
         // Setup drawing
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
         _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
-        GraphicsDevice.Clear(new Color(100, 34, 125));
+        GraphicsDevice.Clear(Color.Black);
+        _spriteBatch.Draw(_bgBathroomTex, Vector2.Zero, Color.White);
         
         // Draw scene objects
         PlayerPaddle1.Draw(gameTime, _spriteBatch);

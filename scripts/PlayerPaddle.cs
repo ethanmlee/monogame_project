@@ -60,9 +60,11 @@ public class PlayerPaddle : Entity
     public void HitBall(Ball ball)
     {
         // ball.Direction = PlayerIndex == 0 ? 1 : -1;
-        Vector2 centerPaddle = Position + Vector2.UnitY * 16;
-        Vector2 hitdir = ball.Position - centerPaddle;
-        ball.Direction = hitdir;
+        Vector2 centerPaddle = Position + (Vector2.UnitY * 16) + (Vector2.UnitX * (PlayerIndex == 0 ? 0 : 15));
+        Vector2 hitDir = ball.Position - centerPaddle;
+        ball.Direction = hitDir;
+        ball.SpinSpeed = hitDir.Y * 0.2f;
+        Debug.WriteLine("HIT");
     }
 
 
