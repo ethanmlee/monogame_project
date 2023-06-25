@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
+using FMOD;
+using FMOD.Studio;
+using FmodForFoxes;
+using FmodForFoxes.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PixelOven.Debug;
+using Bank = FmodForFoxes.Studio.Bank;
 
 namespace monogame_project;
 public class Game1 : Game
@@ -24,6 +29,10 @@ public class Game1 : Game
     public static ContentManager ContentManager;
 
     private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0, 160);
+    
+    // FMOD
+    private readonly INativeFmodLibrary _nativeLibrary = new DesktopNativeFmodLibrary();
+    private Bank _masterBank;
 
     public Game1()
     {
@@ -51,6 +60,9 @@ public class Game1 : Game
             Graphics.GraphicsDevice.PresentationParameters.MultiSampleCount = 4;
         };
         
+        // FMOD Setup
+        FmodManager.Init(_nativeLibrary, FmodInitMode.CoreAndStudio, "Content");
+
         base.Initialize();
     }
 
@@ -61,6 +73,22 @@ public class Game1 : Game
         PlayerPaddle1.LoadContent();
         PlayerPaddle2.LoadContent();
         Ball.LoadContent();
+        
+        // FMOD
+        _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.bank");
+        _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.strings.bank");
+        var audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
+        audioInstance.Start();
+        audioInstance.Dispose();
+    }
+
+    /// <summary>
+    /// UnloadContent will be called once per game and is the place to unload
+    /// game-specific content.
+    /// </summary>
+    protected override void UnloadContent()
+    {
+        FmodManager.Unload();
     }
 
     protected override void Update(GameTime gameTime)
@@ -70,6 +98,9 @@ public class Game1 : Game
             Exit();
         if (Keyboard.GetState().IsKeyDown(Keys.F3))
             DebugManager.ShowCollisionRectangles = true;
+        
+        // FMOD
+        FmodManager.Update();
 
         // Update scene objects
         PlayerPaddle1.Update(gameTime);
