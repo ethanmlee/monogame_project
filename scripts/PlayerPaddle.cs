@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -8,8 +9,8 @@ public class PlayerPaddle : Entity
 {
     private static Texture2D _paddleTex;
 
-    public int PlayerIndex = 0;
-    
+    public readonly int PlayerIndex = 0;
+
     public BoundingBox BoundingBox;
     
     public PlayerPaddle(int playerIndex)
@@ -63,7 +64,7 @@ public class PlayerPaddle : Entity
         Vector2 centerPaddle = Position + (Vector2.UnitY * 16) + (Vector2.UnitX * (PlayerIndex == 0 ? 0 : 15));
         Vector2 hitDir = ball.Position - centerPaddle;
         ball.Direction = hitDir;
-        ball.SpinSpeed = hitDir.Y * 0.2f;
+        ball.SpinSpeed = MathF.Abs(hitDir.Y) * 0.2f * MathF.Sign(hitDir.X);
         Debug.WriteLine("HIT");
     }
 
