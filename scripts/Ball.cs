@@ -8,7 +8,7 @@ public class Ball : Entity
     
     public BoundingBox BoundingBox;
 
-    public int Direction = -1;
+    public Vector2 Direction = Vector2.UnitY;
     
     public override void LoadContent()
     {
@@ -23,9 +23,7 @@ public class Ball : Entity
 
     public override void Update(GameTime gameTime)
     {
-        Vector2 directionInput = new Vector2();
-        directionInput.Y =  0;
-        directionInput.X =  Direction;
+        Vector2 directionInput = Vector2.Normalize(Direction);
 
         if (directionInput.LengthSquared() > 0)
         {

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -55,8 +56,14 @@ public class PlayerPaddle : Entity
         BoundingBox.Draw(spriteBatch);
     }
     
+
     public void HitBall(Ball ball)
     {
-        ball.Direction = PlayerIndex == 0 ? 1 : -1;
+        // ball.Direction = PlayerIndex == 0 ? 1 : -1;
+        Vector2 centerPaddle = Position + Vector2.UnitY * 16;
+        Vector2 hitdir = ball.Position - centerPaddle;
+        ball.Direction = hitdir;
     }
+
+
 }
