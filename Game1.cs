@@ -43,6 +43,7 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
+        Window.Title = "Contact Protect";
         _mainRenderTarget = new RenderTarget2D(GraphicsDevice, (int)RenderResolution.X, (int)RenderResolution.Y);
         Graphics.PreparingDeviceSettings += ( sender,  args) =>
         {
