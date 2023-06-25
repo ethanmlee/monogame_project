@@ -4,10 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 namespace monogame_project;
 public class Ball : Entity
 {
-    public Vector2 Position = new Vector2(0, 0);
     private static Texture2D _ballTex;
     
-    public BoundingBox BoundingBox = new BoundingBox(Vector2.One * -2.5f, Vector2.One * 6);
+    public BoundingBox BoundingBox;
 
     public int Direction = -1;
     
@@ -18,6 +17,8 @@ public class Ball : Entity
 
         // Position = Game1.ScreenSize / 2f;
         Position = new Vector2(240, 160) / 2f;
+        
+        BoundingBox = new BoundingBox(this, Vector2.One * -4f, Vector2.One * 8);
     }
 
     public override void Update(GameTime gameTime)
@@ -31,8 +32,6 @@ public class Ball : Entity
             directionInput /= directionInput.Length();
             Position += directionInput * 60 * (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
-        
-        BoundingBox.Position = Position;
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -40,5 +39,6 @@ public class Ball : Entity
         const float size = 10;
         spriteBatch.Draw(_ballTex, Position, null, Color.White, 0f, Vector2.One * _ballTex.Height / 2f,
             size / _ballTex.Height, SpriteEffects.None, 0);
+        BoundingBox.Draw(spriteBatch);
     }
 }
