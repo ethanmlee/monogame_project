@@ -7,7 +7,7 @@ namespace monogame_project;
 
 public class BoundingBox
 {
-    public Entity Entity;
+    public readonly Entity Entity;
     public Vector2 Position => Entity.Position;
     public Vector2 Offset;
     public Vector2 Size;
@@ -25,17 +25,57 @@ public class BoundingBox
         Size = size;
     }
 
-    public int Top => (int)PosOffset.Y;
+    public int Top
+    {
+        get => (int)PosOffset.Y;
+        set => Entity.Position.Y = value - Offset.Y;
+    }
 
-    public int Bottom => (int)PosOffset.Y + Height - 1;
+    public int Bottom
+    {
+        get => (int)PosOffset.Y + Height;
+        set => Entity.Position.Y = value - Height - Offset.Y;
+    }
 
-    public int Left => (int)PosOffset.X;
+    public int Left
+    {
+        get => (int)PosOffset.X;
+        set => Entity.Position.X = value - Offset.X;
+    }
 
-    public int Right => (int)PosOffset.X + Width - 1;
+    public int Right
+    {
+        get => (int)PosOffset.X + Width - 1;
+        set => Entity.Position.X = value - Width - Offset.X;
+    }
 
-    public Vector2 Center => new Vector2(PosOffset.X + Width / 2f, PosOffset.Y + Height / 2f);
+    public Vector2 Center
+    {
+        get => new Vector2(PosOffset.X + Width / 2f, PosOffset.Y + Height / 2f);
+        set => Entity.Position = value - Offset - Size / 2f;
+    }
 
-    public Vector2 BottomCenter => new Vector2(PosOffset.X + Width / 2f, Bottom);
+    public int CenterX
+    {
+        get => (int)Center.X;
+        set => Entity.Position.X = value - Offset.X - Width / 2f;
+    }
+    
+    public int CenterY
+    {
+        get => (int)Center.Y;
+        set => Entity.Position.Y = value - - Offset.Y - Height / 2f;
+    }
+
+    public Vector2 BottomCenter
+    {
+        get => new Vector2(PosOffset.X + Width / 2f, Bottom);
+        set
+        {
+            Bottom = (int)value.Y;
+            CenterX = (int)value.X;
+        }
+    }
 
     public Rectangle Bounds => new Rectangle(x:(int)PosOffset.X, y:(int)PosOffset.Y, width:(int)Width, height:(int)Height);
     
@@ -51,30 +91,22 @@ public class BoundingBox
             string sizeKey = string.Concat(Width, "x", Height);
             if (RectangleTextures.ContainsKey(sizeKey))
             {
+                // If we have already generated the texture for that size, set and return it
                 _rectangleTexture = RectangleTextures[sizeKey];
+                return _rectangleTexture;
             }
-            else
+            
+            List<Color> colors = new List<Color>();
+            for (int y = 0; y < Height; y++) 
+            for (int x = 0; x < Width; x++)
             {
-                List<Color> colors = new List<Color>();
-                for (int y = 0; y < Height; y++)
-                {
-                    for (int x = 0; x < Width; x++)
-                    {
-                        if (x == 0 || x == Width - 1 || y == 0 || y == Height - 1)
-                        {
-                            colors.Add(Color.White);
-                        }
-                        else
-                        {
-                            colors.Add(Color.Transparent);
-                        }
-                    }
-                }
-                _rectangleTexture?.Dispose();
-                _rectangleTexture = new Texture2D(Game1.Graphics.GraphicsDevice, Width, Height);
-                _rectangleTexture.SetData(colors.ToArray());
-                RectangleTextures.Add(sizeKey, _rectangleTexture);
+                bool isEdge = x == 0 || x == Width - 1 || y == 0 || y == Height - 1;
+                colors.Add(isEdge ? Color.White : Color.Transparent);
             }
+            _rectangleTexture?.Dispose();
+            _rectangleTexture = new Texture2D(Game1.Graphics.GraphicsDevice, Width, Height);
+            _rectangleTexture.SetData(colors.ToArray());
+            RectangleTextures.Add(sizeKey, _rectangleTexture);
 
             return _rectangleTexture;
         }

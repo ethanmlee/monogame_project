@@ -17,10 +17,11 @@ public class Game1 : Game
     public static GraphicsDeviceManager Graphics;
     private SpriteBatch _spriteBatch;
     // The resolution the camera should render at, separate from the size
-    public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
+    public static Vector2 RenderResolution = new Vector2(240 * 1, 160 * 1);
     private RenderTarget2D _mainRenderTarget;
 
     private Texture2D _bgBathroomTex;
+    private Texture2D _borderMockupTex;
     
     public static readonly PlayerPaddle PlayerPaddle1 = new PlayerPaddle(0);
     public static readonly PlayerPaddle PlayerPaddle2 = new PlayerPaddle(1);
@@ -29,6 +30,8 @@ public class Game1 : Game
     public static ContentManager ContentManager;
 
     private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0, 160);
+
+    public static Rectangle OpenSpace = new Rectangle(12, 8, 216, 128);
     
     // FMOD
     private readonly INativeFmodLibrary _nativeLibrary = new DesktopNativeFmodLibrary();
@@ -70,6 +73,7 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _bgBathroomTex = ContentManager.Load<Texture2D>("Textures/BG_Bathroom");
+        _borderMockupTex = ContentManager.Load<Texture2D>("Textures/BorderMockup");
         PlayerPaddle1.LoadContent();
         PlayerPaddle2.LoadContent();
         Ball.LoadContent();
@@ -77,6 +81,7 @@ public class Game1 : Game
         // FMOD
         _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.bank");
         _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.strings.bank");
+        _masterBank.LoadSampleData();
         var audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
         audioInstance.Start();
         audioInstance.Dispose();
@@ -133,6 +138,7 @@ public class Game1 : Game
         _spriteBatch.End();
         
         _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
+        _spriteBatch.Draw(_borderMockupTex, Vector2.Zero, Color.White);
         DebugManager.Draw(_spriteBatch);
         _spriteBatch.End();
     }

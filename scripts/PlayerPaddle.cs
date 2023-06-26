@@ -8,10 +8,9 @@ namespace monogame_project;
 public class PlayerPaddle : Entity
 {
     private static Texture2D _paddleTex;
-
     public readonly int PlayerIndex = 0;
-
     public BoundingBox BoundingBox;
+    private const int DistanceFromSide = 8;
     
     public PlayerPaddle(int playerIndex)
     {
@@ -24,8 +23,9 @@ public class PlayerPaddle : Entity
         _paddleTex ??= Game1.ContentManager.Load<Texture2D>("Textures/Paddle");
 
         BoundingBox = new BoundingBox(this, new Vector2(PlayerIndex == 0 ? 0 : 10, 0), new Vector2(6, 32));
-        int playerX = (PlayerIndex == 0) ? 5 : 240 - 5 - _paddleTex.Width;
-        Position = new Vector2(playerX, 80 - _paddleTex.Height / 2f);
+        if (PlayerIndex == 0) BoundingBox.Left = Game1.OpenSpace.Left + DistanceFromSide;
+        if (PlayerIndex == 1) BoundingBox.Right = Game1.OpenSpace.Right - DistanceFromSide;
+        BoundingBox.CenterY = Game1.OpenSpace.Center.Y;
     }
 
     public override void Update(GameTime gameTime)
@@ -41,8 +41,8 @@ public class PlayerPaddle : Entity
             Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
 
-        if (Position.Y < 0) Position.Y = 0;
-        if (Position.Y > 160 - _paddleTex.Height) Position.Y = 160 - _paddleTex.Height;
+        if (BoundingBox.Top < Game1.OpenSpace.Top) BoundingBox.Top = Game1.OpenSpace.Top;
+        if (BoundingBox.Bottom > Game1.OpenSpace.Bottom) BoundingBox.Bottom = Game1.OpenSpace.Bottom;
         
         if (BoundingBox.IsIntersecting(Game1.Ball.BoundingBox))
         {
@@ -57,8 +57,7 @@ public class PlayerPaddle : Entity
         BoundingBox.Draw(spriteBatch);
     }
     
-
-    public void HitBall(Ball ball)
+    private void HitBall(Ball ball)
     {
         // ball.Direction = PlayerIndex == 0 ? 1 : -1;
         Vector2 centerPaddle = Position + (Vector2.UnitY * 16) + (Vector2.UnitX * (PlayerIndex == 0 ? 0 : 15));
@@ -67,6 +66,4 @@ public class PlayerPaddle : Entity
         ball.SpinSpeed = MathF.Abs(hitDir.Y) * 0.2f * MathF.Sign(hitDir.X);
         Debug.WriteLine("HIT");
     }
-
-
 }

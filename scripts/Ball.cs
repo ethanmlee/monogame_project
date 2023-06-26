@@ -6,9 +6,7 @@ namespace monogame_project;
 public class Ball : Entity
 {
     private static Texture2D _ballTex;
-    
     public BoundingBox BoundingBox;
-
     public Vector2 Direction = -Vector2.UnitX;
     private float _angle = 0f;
     public float SpinSpeed = 0f;
@@ -21,6 +19,8 @@ public class Ball : Entity
         Position = new Vector2(240, 160) / 2f;
         
         BoundingBox = new BoundingBox(this, Vector2.One * -4f, Vector2.One * 8);
+        
+        BoundingBox.Center = Game1.OpenSpace.Center.ToVector2();
     }
 
     public override void Update(GameTime gameTime)
@@ -29,12 +29,11 @@ public class Ball : Entity
 
         if (directionInput.LengthSquared() > 0)
         {
-            // directionInput /= directionInput.Length();
             Position += directionInput * 90 * (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
         
-        if (BoundingBox.Top < 0 && Direction.Y < 0) Direction.Y *= -1;
-        if (BoundingBox.Bottom > 160 && Direction.Y > 0) Direction.Y *= -1;
+        if (BoundingBox.Top < Game1.OpenSpace.Top && Direction.Y < 0) Direction.Y *= -1;
+        if (BoundingBox.Bottom > Game1.OpenSpace.Bottom && Direction.Y > 0) Direction.Y *= -1;
 
         _angle += MathF.PI * SpinSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
     }
