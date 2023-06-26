@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using monogame_project.Input;
 using PixelOven.Debug;
 using Bank = FmodForFoxes.Studio.Bank;
 
@@ -98,11 +99,12 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
+        InputManager.Update();
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
-        if (Keyboard.GetState().IsKeyDown(Keys.F3))
-            DebugManager.ShowCollisionRectangles = true;
+        if (InputManager.KeyPressed(Keys.F3))
+            DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
         
         // FMOD
         FmodManager.Update();
