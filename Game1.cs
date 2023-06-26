@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Input;
 using monogame_project.Input;
 using PixelOven.Debug;
 using Bank = FmodForFoxes.Studio.Bank;
+using EventInstance = FmodForFoxes.Studio.EventInstance;
 
 namespace monogame_project;
 public class Game1 : Game
@@ -37,6 +38,7 @@ public class Game1 : Game
     // FMOD
     private readonly INativeFmodLibrary _nativeLibrary = new DesktopNativeFmodLibrary();
     private Bank _masterBank;
+    private EventInstance _audioInstance;
 
     public Game1()
     {
@@ -83,9 +85,9 @@ public class Game1 : Game
         _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.bank");
         _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.strings.bank");
         _masterBank.LoadSampleData();
-        var audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
-        audioInstance.Start();
-        audioInstance.Dispose();
+        _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
+        _audioInstance.Start();
+        _audioInstance.Dispose();
     }
 
     /// <summary>
@@ -105,7 +107,7 @@ public class Game1 : Game
             Exit();
         if (InputManager.KeyPressed(Keys.F3))
             DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
-        
+
         // FMOD
         FmodManager.Update();
 
@@ -130,7 +132,7 @@ public class Game1 : Game
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
         _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
         GraphicsDevice.Clear(Color.Black);
-        _spriteBatch.Draw(_bgBathroomTex, Vector2.Zero, Color.White);
+        _spriteBatch.Draw(_bgBathroomTex, OpenSpace.Location.ToVector2(), Color.White);
         
         // Draw scene objects
         PlayerPaddle1.Draw(gameTime, _spriteBatch);

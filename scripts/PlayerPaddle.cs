@@ -41,8 +41,12 @@ public class PlayerPaddle : Entity
             Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
 
-        if (BoundingBox.Top < Game1.OpenSpace.Top) BoundingBox.Top = Game1.OpenSpace.Top;
-        if (BoundingBox.Bottom > Game1.OpenSpace.Bottom) BoundingBox.Bottom = Game1.OpenSpace.Bottom;
+        // Make a copy of the game boarder, with 3 pixels taken off the top and bottom
+        var borderWithPadding = Game1.OpenSpace;
+        borderWithPadding.Inflate(0, -3);
+        
+        if (BoundingBox.Top < borderWithPadding.Top) BoundingBox.Top = borderWithPadding.Top;
+        if (BoundingBox.Bottom > borderWithPadding.Bottom) BoundingBox.Bottom = borderWithPadding.Bottom;
         
         if (BoundingBox.IsIntersecting(Game1.Ball.BoundingBox))
         {

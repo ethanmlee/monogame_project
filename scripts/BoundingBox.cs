@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,25 +28,25 @@ public class BoundingBox
 
     public int Top
     {
-        get => (int)PosOffset.Y;
+        get => (int)MathF.Round(PosOffset.Y);
         set => Entity.Position.Y = value - Offset.Y;
     }
 
     public int Bottom
     {
-        get => (int)PosOffset.Y + Height;
+        get => (int)MathF.Round(PosOffset.Y + Height);
         set => Entity.Position.Y = value - Height - Offset.Y;
     }
 
     public int Left
     {
-        get => (int)PosOffset.X;
+        get => (int)MathF.Round(PosOffset.X);
         set => Entity.Position.X = value - Offset.X;
     }
 
     public int Right
     {
-        get => (int)PosOffset.X + Width - 1;
+        get => (int)MathF.Round(PosOffset.X + Width - 1);
         set => Entity.Position.X = value - Width - Offset.X;
     }
 
@@ -57,13 +58,13 @@ public class BoundingBox
 
     public int CenterX
     {
-        get => (int)Center.X;
+        get => (int)MathF.Round(Center.X);
         set => Entity.Position.X = value - Offset.X - Width / 2f;
     }
     
     public int CenterY
     {
-        get => (int)Center.Y;
+        get => (int)MathF.Round(Center.Y);
         set => Entity.Position.Y = value - - Offset.Y - Height / 2f;
     }
 
