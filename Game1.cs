@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework.Input;
 using monogame_project.Input;
 using PixelOven.Debug;
 using Bank = FmodForFoxes.Studio.Bank;
+using Bus = FmodForFoxes.Studio.Bus;
+using ChannelGroup = FmodForFoxes.ChannelGroup;
 using EventInstance = FmodForFoxes.Studio.EventInstance;
 
 namespace monogame_project;
@@ -39,6 +41,8 @@ public class Game1 : Game
     private readonly INativeFmodLibrary _nativeLibrary = new DesktopNativeFmodLibrary();
     private Bank _masterBank;
     private EventInstance _audioInstance;
+    private Bus _masterBus;
+    private FMOD.ChannelGroup _channelGroup;
 
     public Game1()
     {
@@ -88,6 +92,7 @@ public class Game1 : Game
         _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
         _audioInstance.Start();
         _audioInstance.Dispose();
+        _masterBus = StudioSystem.GetBus("bus:/Sounds");
     }
 
     /// <summary>
@@ -97,6 +102,7 @@ public class Game1 : Game
     protected override void UnloadContent()
     {
         FmodManager.Unload();
+        _masterBank.Unload();
     }
 
     protected override void Update(GameTime gameTime)
@@ -107,7 +113,16 @@ public class Game1 : Game
             Exit();
         if (InputManager.KeyPressed(Keys.F3))
             DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
-
+        if (InputManager.KeyPressed(Keys.P))
+        {
+            var native = _masterBus.Native;
+            if (native.getChannelGroup(out _channelGroup) == RESULT.OK)
+            {
+                _masterBus.UnlockChannelGroup();
+                _channelGroup.setPitch(3f);
+            }
+        }
+        
         // FMOD
         FmodManager.Update();
 

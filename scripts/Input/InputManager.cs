@@ -10,7 +10,7 @@ public static class InputManager
     public static void Update()
     {
         _previousKeyState = _currentKeyState;
-        _currentKeyState = Microsoft.Xna.Framework.Input.Keyboard.GetState();
+        _currentKeyState = Keyboard.GetState();
     }
     
     public static KeyboardState GetState()
