@@ -1,18 +1,12 @@
 ﻿using System;
-using System.Diagnostics;
-using FMOD;
-using FMOD.Studio;
-using FmodForFoxes;
 using FmodForFoxes.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using monogame_project.Helper_Tools;
 using monogame_project.Input;
 using PixelOven.Debug;
-using Bank = FmodForFoxes.Studio.Bank;
-using Bus = FmodForFoxes.Studio.Bus;
-using ChannelGroup = FmodForFoxes.ChannelGroup;
 using EventInstance = FmodForFoxes.Studio.EventInstance;
 
 namespace monogame_project;
@@ -21,7 +15,7 @@ public class Game1 : Game
     public static GraphicsDeviceManager Graphics;
     private SpriteBatch _spriteBatch;
     // The resolution the camera should render at, separate from the size
-    public static Vector2 RenderResolution = new Vector2(240 * 1, 160 * 1);
+    public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
     private RenderTarget2D _mainRenderTarget;
 
     private Texture2D _bgBathroomTex;
@@ -37,12 +31,7 @@ public class Game1 : Game
 
     public static Rectangle OpenSpace = new Rectangle(12, 8, 216, 128);
     
-    // FMOD
-    private readonly INativeFmodLibrary _nativeLibrary = new DesktopNativeFmodLibrary();
-    private Bank _masterBank;
     private EventInstance _audioInstance;
-    private Bus _masterBus;
-    private FMOD.ChannelGroup _channelGroup;
 
     public Game1()
     {
@@ -69,9 +58,8 @@ public class Game1 : Game
             Graphics.PreferMultiSampling = true;
             Graphics.GraphicsDevice.PresentationParameters.MultiSampleCount = 4;
         };
-        
-        // FMOD Setup
-        FmodManager.Init(_nativeLibrary, FmodInitMode.CoreAndStudio, "Content");
+
+        FmodController.Init();
 
         base.Initialize();
     }
@@ -86,13 +74,10 @@ public class Game1 : Game
         Ball.LoadContent();
         
         // FMOD
-        _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.bank");
-        _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.strings.bank");
-        _masterBank.LoadSampleData();
+        FmodController.LoadContent();
         _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
         _audioInstance.Start();
         _audioInstance.Dispose();
-        _masterBus = StudioSystem.GetBus("bus:/Sounds");
     }
 
     /// <summary>
@@ -101,8 +86,7 @@ public class Game1 : Game
     /// </summary>
     protected override void UnloadContent()
     {
-        FmodManager.Unload();
-        _masterBank.Unload();
+        FmodController.UnloadContent();
     }
 
     protected override void Update(GameTime gameTime)
@@ -113,18 +97,8 @@ public class Game1 : Game
             Exit();
         if (InputManager.KeyPressed(Keys.F3))
             DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
-        if (InputManager.KeyPressed(Keys.P))
-        {
-            var native = _masterBus.Native;
-            if (native.getChannelGroup(out _channelGroup) == RESULT.OK)
-            {
-                _masterBus.UnlockChannelGroup();
-                _channelGroup.setPitch(3f);
-            }
-        }
-        
         // FMOD
-        FmodManager.Update();
+        FmodController.Update();
 
         // Update scene objects
         PlayerPaddle1.Update(gameTime);
@@ -145,17 +119,22 @@ public class Game1 : Game
     {
         // Setup drawing
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
-        _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
-        GraphicsDevice.Clear(Color.Black);
+        
+        // Draw BACKGROUND
+        _spriteBatch.Begin(transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
+        GraphicsDevice.Clear(Color.White);
         _spriteBatch.Draw(_bgBathroomTex, OpenSpace.Location.ToVector2(), Color.White);
+        _spriteBatch.End();
         
         // Draw scene objects
+        _spriteBatch.Begin(sortMode: SpriteSortMode.BackToFront, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
         PlayerPaddle1.Draw(gameTime, _spriteBatch);
         PlayerPaddle2.Draw(gameTime, _spriteBatch);
         Ball.Draw(gameTime, _spriteBatch);
         // End drawing
         _spriteBatch.End();
         
+        // Debug drawing (in another sprite batch so it's always on top)
         _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
         _spriteBatch.Draw(_borderMockupTex, Vector2.Zero, Color.White);
         DebugManager.Draw(_spriteBatch);
