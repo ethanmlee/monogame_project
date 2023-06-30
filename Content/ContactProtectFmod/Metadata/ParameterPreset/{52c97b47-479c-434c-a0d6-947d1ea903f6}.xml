@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="ParameterPreset" id="{52c97b47-479c-434c-a0d6-947d1ea903f6}">
+		<property name="name">
+			<value>GameAudioSpeedMod</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e232727e-7339-49c3-b9f5-8979624311b1}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{b6e2ac4a-27bf-4684-9bf5-82d68c03b8ab}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{b6e2ac4a-27bf-4684-9bf5-82d68c03b8ab}">
+		<property name="minimum">
+			<value>0.5</value>
+		</property>
+		<property name="maximum">
+			<value>2</value>
+		</property>
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+		<property name="initialValue">
+			<value>1</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+	</object>
+</objects>

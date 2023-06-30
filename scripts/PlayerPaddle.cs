@@ -38,7 +38,7 @@ public class PlayerPaddle : Entity
         if (directionInput.LengthSquared() > 0)
         {
             directionInput /= directionInput.Length();
-            Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            Position += directionInput * 80 * (float)gameTime.ElapsedGameTime.TotalSeconds * Game1.GameAudioSpeedMod;
         }
 
         // Make a copy of the game boarder, with 3 pixels taken off the top and bottom
@@ -68,6 +68,7 @@ public class PlayerPaddle : Entity
         Vector2 hitDir = ball.Position - centerPaddle;
         ball.Direction = hitDir;
         ball.SpinSpeed = MathF.Abs(hitDir.Y) * 0.2f * MathF.Sign(hitDir.X);
+        // Game1.GameSpeedMul += 0.1f;
         Debug.WriteLine("HIT");
     }
 }

@@ -1,4 +1,7 @@
 ﻿using System;
+using FMOD;
+using FMOD.Studio;
+using FmodForFoxes;
 using FmodForFoxes.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -30,6 +33,17 @@ public class Game1 : Game
     private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0, 160);
 
     public static Rectangle OpenSpace = new Rectangle(12, 8, 216, 128);
+
+    // GameAudioSpeedMod is calculated as "2 * speed stage", converted from semitones into FMOD Speed
+    // Game speed needs to be multiplied by GameAudioSpeedMod (as this is the one that sets the audio speed)
+    // Fmod audio is pitched up by GameAudioSpeedMod (as this is the one that sets the audio speed)
+    // FmodDspPitchMod is set to "-speed stage", converted from semitones into FMOD Speed
+    // DON'T FORGET: -(semitone to FMOD Speed) is NOT the same as (-semitone to FMOD Speed) as it is an exponential formula
+    // Semitones are on a range of -12 to 12, and FMOD speed is a range of 0.5 to 2.
+    // SpeedStage should never exceed a value of 6, except if you want stupid gameplay
+    public static int SpeedStage = 1;
+    public static float GameAudioSpeedMod => FmodController.SemitoneToSpeedMultiplier(2 * SpeedStage);
+    public static float FmodDspPitchMod => FmodController.SemitoneToSpeedMultiplier(-SpeedStage);
     
     private EventInstance _audioInstance;
 
@@ -78,6 +92,17 @@ public class Game1 : Game
         _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
         _audioInstance.Start();
         _audioInstance.Dispose();
+        /*var sound = CoreSystem.LoadStreamedSound("WW_Jingle1.mp3");
+        var channel = sound.Play();
+        var channelNative = channel.Native;
+        channel.Pitch = GameAudioSpeedMod;
+        if (CoreSystem.Native.createDSPByType(DSP_TYPE.PITCHSHIFT, out var dsp) == RESULT.OK)
+        {
+            if (channelNative.addDSP(CHANNELCONTROL_DSP_INDEX.HEAD, dsp) == RESULT.OK)
+            {
+                dsp.setParameterFloat((int)FMOD.DSP_PITCHSHIFT.PITCH, FmodDspPitchMod);
+            }
+        }*/
     }
 
     /// <summary>
@@ -97,8 +122,10 @@ public class Game1 : Game
             Exit();
         if (InputManager.KeyPressed(Keys.F3))
             DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
+
         // FMOD
         FmodController.Update();
+        // FmodController.SetGameSpeed(GameAudioSpeedMod);
 
         // Update scene objects
         PlayerPaddle1.Update(gameTime);
