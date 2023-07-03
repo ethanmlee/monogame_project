@@ -15,10 +15,13 @@ using EventInstance = FmodForFoxes.Studio.EventInstance;
 namespace monogame_project;
 public class Game1 : Game
 {
+    public const int BaseRenderWidth = 240;
+    public const int BaseRenderHeight = 160;
+    
     public static GraphicsDeviceManager Graphics;
     private SpriteBatch _spriteBatch;
     // The resolution the camera should render at, separate from the size
-    public static Vector2 RenderResolution = new Vector2(240 * 4, 160 * 4);
+    public static Vector2 RenderResolution = new Vector2(BaseRenderWidth * 1, BaseRenderHeight * 1);
     private RenderTarget2D _mainRenderTarget;
 
     private Texture2D _bgBathroomTex;
@@ -41,7 +44,7 @@ public class Game1 : Game
     // DON'T FORGET: -(semitone to FMOD Speed) is NOT the same as (-semitone to FMOD Speed) as it is an exponential formula
     // Semitones are on a range of -12 to 12, and FMOD speed is a range of 0.5 to 2.
     // SpeedStage should never exceed a value of 6, except if you want stupid gameplay
-    public static int SpeedStage = 1;
+    public static int SpeedStage = 0;
     public static float GameAudioSpeedMod => FmodController.SemitoneToSpeedMultiplier(2 * SpeedStage);
     public static float FmodDspPitchMod => FmodController.SemitoneToSpeedMultiplier(-SpeedStage);
     
@@ -58,8 +61,8 @@ public class Game1 : Game
         Graphics.SynchronizeWithVerticalRetrace = false;
         
         // Sets the window size
-        Graphics.PreferredBackBufferWidth = 240 * 10;
-        Graphics.PreferredBackBufferHeight = 160 * 10;
+        Graphics.PreferredBackBufferWidth = BaseRenderWidth * 10;
+        Graphics.PreferredBackBufferHeight = BaseRenderHeight * 10;
         Graphics.ApplyChanges();
     }
 
@@ -92,17 +95,6 @@ public class Game1 : Game
         _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
         _audioInstance.Start();
         _audioInstance.Dispose();
-        /*var sound = CoreSystem.LoadStreamedSound("WW_Jingle1.mp3");
-        var channel = sound.Play();
-        var channelNative = channel.Native;
-        channel.Pitch = GameAudioSpeedMod;
-        if (CoreSystem.Native.createDSPByType(DSP_TYPE.PITCHSHIFT, out var dsp) == RESULT.OK)
-        {
-            if (channelNative.addDSP(CHANNELCONTROL_DSP_INDEX.HEAD, dsp) == RESULT.OK)
-            {
-                dsp.setParameterFloat((int)FMOD.DSP_PITCHSHIFT.PITCH, FmodDspPitchMod);
-            }
-        }*/
     }
 
     /// <summary>
@@ -122,10 +114,14 @@ public class Game1 : Game
             Exit();
         if (InputManager.KeyPressed(Keys.F3))
             DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
-
+        if (InputManager.KeyPressed(Keys.P))
+        {
+            SpeedStage++;
+            FmodController.RefreshToGameSpeed();
+        }
+        
         // FMOD
         FmodController.Update();
-        // FmodController.SetGameSpeed(GameAudioSpeedMod);
 
         // Update scene objects
         PlayerPaddle1.Update(gameTime);

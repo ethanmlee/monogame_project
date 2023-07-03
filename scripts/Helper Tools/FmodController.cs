@@ -43,13 +43,12 @@ public static class FmodController
         while (native.getChannelGroup(out _channelGroup) != RESULT.OK) { await Task.Yield(); }
         
         _masterBus.UnlockChannelGroup();
-        _channelGroup.setPitch(Game1.GameAudioSpeedMod);
 
         if (CoreSystem.Native.createDSPByType(DSP_TYPE.PITCHSHIFT, out _pitchDsp) == RESULT.OK)
         {
             if (_channelGroup.addDSP(CHANNELCONTROL_DSP_INDEX.HEAD, _pitchDsp) == RESULT.OK)
             {
-                _pitchDsp.setParameterFloat((int)FMOD.DSP_PITCHSHIFT.PITCH, Game1.FmodDspPitchMod);
+                RefreshToGameSpeed();
                 initlizedPitchDsp = true;
             }
         }
@@ -82,14 +81,10 @@ public static class FmodController
 
     #region Game Specific
 
-    public static void SetGameSpeed(float speed)
+    public static void RefreshToGameSpeed()
     {
-        var native = _masterBus.Native;
-        if (native.getChannelGroup(out _channelGroup) == RESULT.OK)
-        {
-            _masterBus.UnlockChannelGroup();
-            _channelGroup.setPitch(speed);
-        }
+        _channelGroup.setPitch(Game1.GameAudioSpeedMod);
+        _pitchDsp.setParameterFloat((int)FMOD.DSP_PITCHSHIFT.PITCH, Game1.FmodDspPitchMod);
     }
 
     public static float SemitoneToSpeedMultiplier(float semitone)
