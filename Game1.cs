@@ -15,13 +15,14 @@ using EventInstance = FmodForFoxes.Studio.EventInstance;
 namespace monogame_project;
 public class Game1 : Game
 {
-    public const int BaseRenderWidth = 240;
-    public const int BaseRenderHeight = 160;
+    public const int BaseRenderWidth = 256;
+    public const int BaseRenderHeight = 192;
+    public const int RenderScaleFactor = 10;
     
     public static GraphicsDeviceManager Graphics;
     private SpriteBatch _spriteBatch;
     // The resolution the camera should render at, separate from the size
-    public static Vector2 RenderResolution = new Vector2(BaseRenderWidth * 1, BaseRenderHeight * 1);
+    public static Vector2 RenderResolution = new Vector2(BaseRenderWidth, BaseRenderHeight) * RenderScaleFactor;
     private RenderTarget2D _mainRenderTarget;
 
     private Texture2D _bgBathroomTex;
@@ -33,9 +34,9 @@ public class Game1 : Game
 
     public static ContentManager ContentManager;
 
-    private readonly Camera _mainCamera = new Camera(new Vector2(120, 80), 0, 160);
+    private readonly Camera _mainCamera = new Camera(new Vector2(BaseRenderWidth, BaseRenderHeight) / 2, 0, BaseRenderHeight);
 
-    public static Rectangle OpenSpace = new Rectangle(12, 8, 216, 128);
+    public static Rectangle OpenSpace = new Rectangle(12, 8, 232, 160);
 
     // GameAudioSpeedMod is calculated as "2 * speed stage", converted from semitones into FMOD Speed
     // Game speed needs to be multiplied by GameAudioSpeedMod (as this is the one that sets the audio speed)
@@ -49,6 +50,7 @@ public class Game1 : Game
     public static float FmodDspPitchMod => FmodController.SemitoneToSpeedMultiplier(-SpeedStage);
     
     private EventInstance _audioInstance;
+    private Texture2D _bgTex;
 
     public Game1()
     {
@@ -58,11 +60,14 @@ public class Game1 : Game
         IsMouseVisible = true;
         TargetElapsedTime = TimeSpan.FromSeconds(1f/60f);
         IsFixedTimeStep = true;
-        Graphics.SynchronizeWithVerticalRetrace = false;
+        Graphics.SynchronizeWithVerticalRetrace = true;
         
         // Sets the window size
         Graphics.PreferredBackBufferWidth = BaseRenderWidth * 10;
         Graphics.PreferredBackBufferHeight = BaseRenderHeight * 10;
+        Graphics.IsFullScreen = true;
+        Window.AllowUserResizing = true;
+        Graphics.HardwareModeSwitch = false;
         Graphics.ApplyChanges();
     }
 
@@ -85,7 +90,8 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _bgBathroomTex = ContentManager.Load<Texture2D>("Textures/BG_Bathroom");
-        _borderMockupTex = ContentManager.Load<Texture2D>("Textures/BorderMockup");
+        _bgTex = ContentManager.Load<Texture2D>("Textures/BG_Dots");
+        _borderMockupTex = ContentManager.Load<Texture2D>("Textures/BorderMockup_DS");
         PlayerPaddle1.LoadContent();
         PlayerPaddle2.LoadContent();
         Ball.LoadContent();
@@ -94,6 +100,7 @@ public class Game1 : Game
         FmodController.LoadContent();
         _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
         _audioInstance.Start();
+        _audioInstance.Volume = 0f;
         _audioInstance.Dispose();
     }
 
@@ -114,6 +121,8 @@ public class Game1 : Game
             Exit();
         if (InputManager.KeyPressed(Keys.F3))
             DebugManager.ShowCollisionRectangles = !DebugManager.ShowCollisionRectangles;
+        if (InputManager.KeyPressed(Keys.F11))
+            Graphics.ToggleFullScreen();
         if (InputManager.KeyPressed(Keys.P))
         {
             SpeedStage++;
@@ -144,13 +153,13 @@ public class Game1 : Game
         GraphicsDevice.SetRenderTarget(_mainRenderTarget);
         
         // Draw BACKGROUND
-        _spriteBatch.Begin(transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
+        _spriteBatch.Begin(transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.LinearClamp, blendState: BlendState.AlphaBlend);
         GraphicsDevice.Clear(Color.White);
-        _spriteBatch.Draw(_bgBathroomTex, OpenSpace.Location.ToVector2(), Color.White);
+        // _spriteBatch.Draw(_bgBathroomTex, OpenSpace.Location.ToVector2(), Color.White);
         _spriteBatch.End();
         
         // Draw scene objects
-        _spriteBatch.Begin(sortMode: SpriteSortMode.BackToFront, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp, blendState: BlendState.AlphaBlend);
+        _spriteBatch.Begin(sortMode: SpriteSortMode.BackToFront, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.LinearClamp, blendState: BlendState.AlphaBlend);
         PlayerPaddle1.Draw(gameTime, _spriteBatch);
         PlayerPaddle2.Draw(gameTime, _spriteBatch);
         Ball.Draw(gameTime, _spriteBatch);
@@ -158,7 +167,7 @@ public class Game1 : Game
         _spriteBatch.End();
         
         // Debug drawing (in another sprite batch so it's always on top)
-        _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.LinearClamp);
         _spriteBatch.Draw(_borderMockupTex, Vector2.Zero, Color.White);
         DebugManager.Draw(_spriteBatch);
         _spriteBatch.End();
@@ -167,8 +176,37 @@ public class Game1 : Game
     private void DrawRenderBufferToScreen()
     {
         GraphicsDevice.SetRenderTarget(null);
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _spriteBatch.Draw(_mainRenderTarget, GraphicsDevice.Viewport.Bounds, Color.White);
+        float width = Window.ClientBounds.Width;
+        float height = Window.ClientBounds.Height;
+
+        float windowAspectRatio = height / width;
+        float gameAspectRatio = (float)BaseRenderHeight / BaseRenderWidth;
+        bool scaleByWidth = gameAspectRatio < windowAspectRatio;
+
+        int maxScaleFactor = 1;
+        if (scaleByWidth)
+            maxScaleFactor = (int)MathF.Floor(width / BaseRenderWidth);
+        else
+            maxScaleFactor = (int)MathF.Floor(height / BaseRenderHeight);
+        
+        int scaledWidth = BaseRenderWidth * maxScaleFactor;
+        int scaledHeight = BaseRenderHeight * maxScaleFactor;
+        int offsetX = (int)(width - scaledWidth) / 2;
+        int offsetY = (int)(height - scaledHeight) / 2;
+        Rectangle destinationRectangle =
+            new Rectangle(offsetX, offsetY, scaledWidth, scaledHeight);
+        
+        _spriteBatch.Begin(samplerState: SamplerState.LinearWrap);
+        _spriteBatch.Draw(_bgTex, Vector2.Zero, GraphicsDevice.Viewport.Bounds, Color.Gray, 0, Vector2.Zero, 3f, SpriteEffects.None, 0);
         _spriteBatch.End();
+        
+        _spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
+        _spriteBatch.Draw(_mainRenderTarget, destinationRectangle, Color.White);
+        _spriteBatch.End();
+    }
+
+    public static Vector2 SizeToScale(Vector2 textureSize, Vector2 targetSize)
+    {
+        return new Vector2(targetSize.X / textureSize.X, targetSize.Y / textureSize.Y);
     }
 }

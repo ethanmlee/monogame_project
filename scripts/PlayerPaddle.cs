@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 namespace monogame_project;
 public class PlayerPaddle : Entity
 {
-    private static Texture2D _paddleTex;
+    private Texture2D _paddleTex;
     public readonly int PlayerIndex = 0;
     public BoundingBox BoundingBox;
     private const int DistanceFromSide = 8;
@@ -19,10 +19,9 @@ public class PlayerPaddle : Entity
     
     public override void LoadContent()
     {
-        base.LoadContent();
-        _paddleTex ??= Game1.ContentManager.Load<Texture2D>("Textures/Paddle");
+        _paddleTex ??= Game1.ContentManager.Load<Texture2D>($"Textures/BottleCap{PlayerIndex + 1}");
 
-        BoundingBox = new BoundingBox(this, new Vector2(PlayerIndex == 0 ? 0 : 10, 0), new Vector2(6, 32));
+        BoundingBox = new BoundingBox(this, new Vector2(PlayerIndex == 0 ? 0 : 2, 0), new Vector2(6, 32));
         if (PlayerIndex == 0) BoundingBox.Left = Game1.OpenSpace.Left + DistanceFromSide;
         if (PlayerIndex == 1) BoundingBox.Right = Game1.OpenSpace.Right - DistanceFromSide;
         BoundingBox.CenterY = Game1.OpenSpace.Center.Y;
@@ -56,7 +55,10 @@ public class PlayerPaddle : Entity
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(_paddleTex, Position, null, Color.White, 0, Vector2.Zero, Vector2.One,
+        Vector2 origin = Vector2.Zero;//new Vector2(PlayerIndex == 0 ? 0 : 7, 15);
+        spriteBatch.Draw(_paddleTex, Position + Vector2.One, null, Color.Black, 0, origin, Game1.SizeToScale(_paddleTex.Bounds.Size.ToVector2(), new Vector2(8, 32)),
+            PlayerIndex == 0 ? SpriteEffects.None : SpriteEffects.FlipHorizontally, 0);
+        spriteBatch.Draw(_paddleTex, Position, null, Color.White, 0, origin, Game1.SizeToScale(_paddleTex.Bounds.Size.ToVector2(), new Vector2(8, 32)),
             PlayerIndex == 0 ? SpriteEffects.None : SpriteEffects.FlipHorizontally, 0);
         BoundingBox.Draw(spriteBatch);
     }

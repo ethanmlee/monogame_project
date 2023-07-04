@@ -28,8 +28,7 @@ public class Ball : Entity
 
     public override void LoadContent()
     {
-        base.LoadContent();
-        _ballTex ??= Game1.ContentManager.Load<Texture2D>("Textures/DustGuy");
+        _ballTex ??= Game1.ContentManager.Load<Texture2D>("Textures/IzzeCan");
 
         Position = new Vector2(240, 160) / 2f;
         
@@ -68,17 +67,19 @@ public class Ball : Entity
     {
         const float size = 10;
 
-        for (int i = 0; i < _spriteStates.Count; i++)
-        {
-            SpriteState spriteState = _spriteStates.ToArray()[i];
-            float alpha = i / 15f;
-            Color color = Color.White * alpha;
-            spriteBatch.Draw(_ballTex, spriteState.Position, null, color, spriteState.Angle, _ballTex.Bounds.Size.ToVector2() / 2f,
-                1, SpriteEffects.None, 0.1f);
-        }
+        // for (int i = 0; i < _spriteStates.Count; i++)
+        // {
+        //     SpriteState spriteState = _spriteStates.ToArray()[i];
+        //     float alpha = i / 15f;
+        //     Color color = Color.White * alpha;
+        //     spriteBatch.Draw(_ballTex, spriteState.Position, null, color, spriteState.Angle, _ballTex.Bounds.Size.ToVector2() / 2f,
+        //         0.025f, SpriteEffects.None, 0.1f);
+        // }
         
+        spriteBatch.Draw(_ballTex, Position + Vector2.One, null, Color.Black, _angle, _ballTex.Bounds.Size.ToVector2() / 2f,
+            0.025f, SpriteEffects.None, 0);
         spriteBatch.Draw(_ballTex, Position, null, Color.White, _angle, _ballTex.Bounds.Size.ToVector2() / 2f,
-            1, SpriteEffects.None, 0);
+            0.025f, SpriteEffects.None, 0);
         BoundingBox.Draw(spriteBatch);
     }
 }

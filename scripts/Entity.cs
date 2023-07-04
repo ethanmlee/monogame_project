@@ -5,7 +5,7 @@ namespace monogame_project;
 public abstract class Entity
 {
     public Vector2 Position = Vector2.Zero;
-    public virtual void LoadContent() {}
-    public virtual void Update(GameTime gameTime) {}
-    public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch) {}
+    public abstract void LoadContent();
+    public abstract void Update(GameTime gameTime);
+    public abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
 }
