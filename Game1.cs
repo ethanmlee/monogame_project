@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using monogame_project.Helper_Tools;
 using monogame_project.Input;
+using monogame_project.TextRendering;
 using PixelOven.Debug;
 using EventInstance = FmodForFoxes.Studio.EventInstance;
 
@@ -51,6 +52,8 @@ public class Game1 : Game
     
     private EventInstance _audioInstance;
     private Texture2D _bgTex;
+
+    private TextRenderer _textRenderer;
 
     public Game1()
     {
@@ -95,6 +98,8 @@ public class Game1 : Game
         PlayerPaddle1.LoadContent();
         PlayerPaddle2.LoadContent();
         Ball.LoadContent();
+
+        _textRenderer = new TextRenderer("Textures/MagnetLetters", charSize: new Vector2(118, 145));
         
         // FMOD
         FmodController.LoadContent();
@@ -170,6 +175,7 @@ public class Game1 : Game
         _spriteBatch.Begin(sortMode: SpriteSortMode.Deferred, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.LinearClamp);
         _spriteBatch.Draw(_borderMockupTex, Vector2.Zero, Color.White);
         DebugManager.Draw(_spriteBatch);
+        _textRenderer.Draw("Magnet Font letters", 16, _spriteBatch);
         _spriteBatch.End();
     }
 
