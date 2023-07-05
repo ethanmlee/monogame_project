@@ -56,8 +56,6 @@ public class Game1 : Game
 
     private TextRenderer _textRenderer;
 
-    private Microgame _microgame = new MgFaucetDrip();
-
     public Game1()
     {
         ContentManager = Content;
@@ -103,9 +101,7 @@ public class Game1 : Game
         Ball.LoadContent();
 
         _textRenderer = new TextRenderer("Textures/MagnetLetters", charSize: new Vector2(118, 145));
-        
-        _microgame.LoadContent();
-        
+
         // FMOD
         FmodController.LoadContent();
         _audioInstance = StudioSystem.GetEvent("event:/SFX/Audio").CreateInstance();
@@ -174,10 +170,6 @@ public class Game1 : Game
         PlayerPaddle2.Draw(gameTime, _spriteBatch);
         Ball.Draw(gameTime, _spriteBatch);
         // End drawing
-        _spriteBatch.End();
-        
-        _spriteBatch.Begin(sortMode: SpriteSortMode.BackToFront, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.LinearClamp, blendState: BlendState.AlphaBlend);
-        _microgame.Draw(gameTime, _spriteBatch);        
         _spriteBatch.End();
         
         // Debug drawing (in another sprite batch so it's always on top)
