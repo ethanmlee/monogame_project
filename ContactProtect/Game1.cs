@@ -1,19 +1,20 @@
 ﻿using System;
-using FMOD;
-using FMOD.Studio;
-using FmodForFoxes;
+using System.Reflection;
+using ContactProtect.Helper_Tools;
+using ContactProtect.Input;
+using ContactProtect.MicrogameStructure;
+using ContactProtect.scripts.Microgames;
+using ContactProtect.TextRendering;
 using FmodForFoxes.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using monogame_project.Helper_Tools;
-using monogame_project.Input;
-using monogame_project.TextRendering;
 using PixelOven.Debug;
 using EventInstance = FmodForFoxes.Studio.EventInstance;
+using ContactProtect.InterfaceTest;
 
-namespace monogame_project;
+namespace ContactProtect;
 public class Game1 : Game
 {
     public const int BaseRenderWidth = 256;
@@ -54,6 +55,8 @@ public class Game1 : Game
     private Texture2D _bgTex;
 
     private TextRenderer _textRenderer;
+
+    private Microgame _microgame = new MgFaucetDrip();
 
     public Game1()
     {
@@ -100,6 +103,8 @@ public class Game1 : Game
         Ball.LoadContent();
 
         _textRenderer = new TextRenderer("Textures/MagnetLetters", charSize: new Vector2(118, 145));
+        
+        _microgame.LoadContent();
         
         // FMOD
         FmodController.LoadContent();
@@ -169,6 +174,10 @@ public class Game1 : Game
         PlayerPaddle2.Draw(gameTime, _spriteBatch);
         Ball.Draw(gameTime, _spriteBatch);
         // End drawing
+        _spriteBatch.End();
+        
+        _spriteBatch.Begin(sortMode: SpriteSortMode.BackToFront, transformMatrix: _mainCamera.TransformationMatrix, samplerState: SamplerState.LinearClamp, blendState: BlendState.AlphaBlend);
+        _microgame.Draw(gameTime, _spriteBatch);        
         _spriteBatch.End();
         
         // Debug drawing (in another sprite batch so it's always on top)

@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PixelOven.Debug;
 
-namespace monogame_project;
+namespace ContactProtect;
 
 public class BoundingBox
 {

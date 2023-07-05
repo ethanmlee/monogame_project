@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace monogame_project;
+namespace ContactProtect;
 public abstract class Entity
 {
     public Vector2 Position = Vector2.Zero;

@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 
-namespace monogame_project;
+namespace ContactProtect;
 
 public class Camera
 {

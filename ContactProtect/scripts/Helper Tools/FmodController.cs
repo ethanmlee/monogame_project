@@ -7,7 +7,7 @@ using FmodForFoxes;
 using FmodForFoxes.Studio;
 using PixelOven.Debug;
 
-namespace monogame_project.Helper_Tools;
+namespace ContactProtect.Helper_Tools;
 
 public static class FmodController
 {

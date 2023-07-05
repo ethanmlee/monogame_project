@@ -1,4 +1,4 @@
-namespace monogame_project.Input;
+namespace ContactProtect.Input;
 
 using Microsoft.Xna.Framework.Input;
 

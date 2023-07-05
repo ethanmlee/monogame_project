@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace monogame_project;
+namespace ContactProtect;
 public class Ball : Entity
 {
     private static Texture2D _ballTex;

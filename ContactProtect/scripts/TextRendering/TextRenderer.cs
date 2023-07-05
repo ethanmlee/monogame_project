@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace monogame_project.TextRendering;
+namespace ContactProtect.TextRendering;
 
 public class TextRenderer
 {

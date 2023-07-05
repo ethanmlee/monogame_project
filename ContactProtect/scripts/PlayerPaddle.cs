@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace monogame_project;
+namespace ContactProtect;
 public class PlayerPaddle : Entity
 {
     private Texture2D _paddleTex;
