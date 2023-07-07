@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactProtect", "ContactProtect\ContactProtect.csproj", "{8434FB2D-9AB3-4EAB-B8C2-03B501C6C6C0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Monogame3dTest", "Monogame3dTest\Monogame3dTest.csproj", "{37B44547-2BE9-4230-9D04-691BAB72E42C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{8434FB2D-9AB3-4EAB-B8C2-03B501C6C6C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8434FB2D-9AB3-4EAB-B8C2-03B501C6C6C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8434FB2D-9AB3-4EAB-B8C2-03B501C6C6C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

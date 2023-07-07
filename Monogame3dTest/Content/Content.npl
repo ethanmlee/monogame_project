@@ -1,0 +1,53 @@
+{
+	"root": "",
+	"references":
+	[
+
+	],
+	"content":
+	{
+		"textures":
+		{
+			"path": "Graphics/*.png",
+			"recursive": "True",
+			"action": "build",
+			"importer": "TextureImporter",
+			"processor": "TextureProcessor",
+			"processorParam":
+			{
+				"ColorKeyColor": "255,0,255,255",
+				"ColorKeyEnabled": "True",
+				"GenerateMipmaps": "True",
+				"PremultiplyAlpha": "True",
+				"ResizeToPowerOfTwo": "False",
+				"MakeSquare": "False",
+				"TextureFormat": "Color"
+			}
+		},
+		"models":
+		{
+		    "path": "Graphics/*.fbx",
+		    "recursive": "True",
+		    "action": "build",
+		    "importer": "FbxImporter",
+		    "processor": "ModelProcessor",
+		    "processorParam":
+		    {
+		        "ColorKeyColor": "0,0,0,0",
+                "ColorKeyEnabled": "True",
+                "DefaultEffect": "BasicEffect",
+                "GenerateMipmaps": "True",
+                "GenerateTangentFrames": "False",
+                "PremultiplyTextureAlpha": "True",
+                "PremultiplyVertexColors": "True",
+                "ResizeTexturesToPowerOfTwo": "False",
+                "RotationX": "0",
+                "RotationY": "0",
+                "RotationZ": "0",
+                "Scale": "1",
+                "SwapWindingOrder": "False",
+                "TextureFormat": "Compressed"
+		    }
+		}
+	}
+}
