@@ -9,6 +9,7 @@ namespace Monogame3dTest.Systems._3D;
 
 public class ModelBasic
 {
+    private Matrix[] _modelTransforms;
     public string ModelPath { get; protected set; }
     public static Dictionary<string, Model> ModelCache { get; protected set; } = new Dictionary<string, Model>();
     
@@ -18,12 +19,13 @@ public class ModelBasic
 
     public Model Model { get; protected set; }
     public Texture2D Texture { get; protected set; }
-    
     public Color DiffuseColor { get; protected set; }
     
     public Matrix WorldMatrix { get; set; }
+    
+    public bool UseIncludedTexture { get; set; }
 
-    public ModelBasic(GraphicsDevice graphicsDevice, ContentManager contentManager, string modelPath, string texturePath = "", Color? diffuseColor = null)
+    public ModelBasic(GraphicsDevice graphicsDevice, ContentManager contentManager, string modelPath, string texturePath = "", bool useIncludedTexture = true, Color? diffuseColor = null)
     {
         // LOADING MODEL
         ModelPath = modelPath;
@@ -36,6 +38,7 @@ public class ModelBasic
             Model = contentManager.Load<Model>(modelPath);
             ModelCache[ModelPath] = Model;
         }
+        _modelTransforms = new Matrix[Model.Bones.Count];
 
         // LOADING TEXTURE
         TexturePath = texturePath;
@@ -52,30 +55,35 @@ public class ModelBasic
                 TextureCache[TexturePath] = Texture;
             }
         }
+        UseIncludedTexture = useIncludedTexture;
 
         DiffuseColor = diffuseColor ?? Color.White;
 
         WorldMatrix = Matrix.Identity;
     }
 
-    public void Draw(Matrix viewMatrix, Matrix projectionMatrix)
+    public void Draw(Matrix viewMatrix, Matrix projectionMatrix, Color? tint = null)
     {
-        Matrix[] modelTransforms = new Matrix[Model.Bones.Count];
-        Model.CopyAbsoluteBoneTransformsTo(modelTransforms);
+        Color tintUnwrapped = tint ?? Color.White;
+        
+        Model.CopyAbsoluteBoneTransformsTo(_modelTransforms);
         // GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         foreach (ModelMesh mesh in Model.Meshes)
         {
-            Matrix localWorld = modelTransforms[mesh.ParentBone.Index] * WorldMatrix;
+            Matrix localWorld = _modelTransforms[mesh.ParentBone.Index] * WorldMatrix;
 
             foreach (var effect1 in mesh.Effects)
             {
                 var effect = (BasicEffect)effect1;
-                // effect.EmissiveColor = Vector3.One * 0.1f;
-                effect.DiffuseColor = DiffuseColor.ToVector3();
+                effect.DiffuseColor = DiffuseColor.ToVector3() * tintUnwrapped.ToVector3();
                 if (Texture != null)
                 {
                     effect.TextureEnabled = true;
                     effect.Texture = Texture;
+                }
+                else if (!UseIncludedTexture)
+                {
+                    effect.TextureEnabled = false;
                 }
                 effect.World = localWorld;
                 effect.View = viewMatrix;

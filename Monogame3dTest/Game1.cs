@@ -34,7 +34,13 @@ public class Game1 : Game
         _graphics.PreferredBackBufferWidth = 1800;
         _graphics.PreferredBackBufferHeight = 1440;
         _graphics.PreferMultiSampling = true;
+        _graphics.HardwareModeSwitch = false;
+        _graphics.SynchronizeWithVerticalRetrace = false;
+        IsFixedTimeStep = true;
+        IsMouseVisible = true;
         _graphics.ApplyChanges();
+
+        Window.AllowUserResizing = true;
         
         _spriteBatch = new SpriteBatch(GraphicsDevice);
     }
@@ -49,38 +55,58 @@ public class Game1 : Game
         {
             for (int y = -halfRange; y <= halfRange; y++)
             {
-                ModelBasic groundModel = new ModelBasic(GraphicsDevice, Content, "Graphics/Fbx_CubeTest");
-
-                float offsetSize = 0.035f;
-                groundModel.WorldMatrix = 
-                    Matrix.CreateFromYawPitchRoll(
-                        rand.Next(-1, 2) * offsetSize,
-                        rand.Next(-1, 2) * offsetSize,
-                        rand.Next(-1, 2) * offsetSize) * 
-                    Matrix.CreateTranslation(
-                        x + rand.Next(-1, 1) * offsetSize, 
-                        rand.Next(-1, 2) * offsetSize, 
-                        y + rand.Next(-1, 2) * offsetSize);
-                groundTestModels.Add(groundModel);
+                MakeGroundBlock(x, y);
             }
         }
-        cubeModel = new ModelBasic(GraphicsDevice, Content, "Graphics/Fbx_CubeTest", "Graphics/Fbx_TurnipKid_Material_BaseMap");
+        cubeModel = new ModelBasic(GraphicsDevice, Content, "Graphics/Fbx_SelectionCube", useIncludedTexture: false);
     }
 
+    private void MakeGroundBlock(float x, float y)
+    {
+        Random rand = new Random();
+        int blockTexIndex = (int)(MathF.Abs((x + y) % 2)) + 1;
+        ModelBasic groundModel = new ModelBasic(GraphicsDevice, Content, "Graphics/Fbx_CubeTest",
+            $"Graphics/Tex_NASU_Block{blockTexIndex}");
+
+        float offsetSize = 0.035f;
+        groundModel.WorldMatrix =
+            Matrix.CreateFromYawPitchRoll(
+                rand.Next(-1, 2) * offsetSize,
+                rand.Next(-1, 2) * offsetSize,
+                rand.Next(-1, 2) * offsetSize) *
+            Matrix.CreateTranslation(
+                x + rand.Next(-1, 1) * offsetSize,
+                rand.Next(-1, 2) * offsetSize,
+                y + rand.Next(-1, 2) * offsetSize);
+        groundTestModels.Add(groundModel);
+    }
+
+    private MouseState _mouseStateLast;
     protected override void Update(GameTime gameTime)
     {
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
         // Add your update logic here
+        Vector3 mousePlanePos = ScreenToPlanePos(Mouse.GetState().Position.ToVector2());
         playerModel.WorldMatrix = Matrix.CreateRotationY(MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds * 4) * 0.2f) * Matrix.CreateTranslation(0, 0.5f, 0);
 
+        var cubePosCurrent = cubeModel.WorldMatrix.Translation;
+        var snappedMousePosScene = new Vector3(MathF.Round(mousePlanePos.X), 0f, MathF.Round(mousePlanePos.Z));
+        var cubePosLerp = Vector3.Lerp(cubePosCurrent, snappedMousePosScene,
+            (float)gameTime.ElapsedGameTime.TotalSeconds * 10f);
+        cubeModel.WorldMatrix = Matrix.CreateScale(1.1f) * Matrix.CreateTranslation(cubePosLerp);
+        if (Mouse.GetState().LeftButton == ButtonState.Pressed && _mouseStateLast.LeftButton == ButtonState.Released)
+        {
+            MakeGroundBlock(snappedMousePosScene.X, snappedMousePosScene.Z);
+        }
+
         _view = Matrix.CreateTranslation(Matrix.Invert(playerModel.WorldMatrix).Translation) * 
-                Matrix.CreateFromAxisAngle(Vector3.Up, (float)(MathF.PI / 4 + gameTime.TotalGameTime.TotalSeconds * 0.5f)) * 
-                Matrix.CreateFromAxisAngle(Vector3.Right, MathF.PI / 6) * 
+                // Matrix.CreateFromAxisAngle(Vector3.Up, (float)(MathF.PI / 4 + gameTime.TotalGameTime.TotalSeconds * 0.5f)) * 
+                Matrix.CreateFromAxisAngle(Vector3.Right, MathF.PI / 4) * 
                 Matrix.CreateTranslation(0f, 0f, -13f);
         // _view = Matrix.CreateLookAt(new Vector3(0, 3, 5), Vector3.Zero + Vector3.Up, Vector3.Up);
-        
+        _mouseStateLast = Mouse.GetState();
         base.Update(gameTime);
     }
 
@@ -91,13 +117,36 @@ public class Game1 : Game
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         playerModel.Draw(_view, _projection);
-        // cubeModel.Draw(_view, _projection);
         foreach (ModelBasic groundTestModel in groundTestModels)
         {
             groundTestModel.Draw(_view, _projection);
         }
-        _spriteBatch.End();
         
+        // Selection Cube
+        // var state = new DepthStencilState();
+        // state.DepthBufferFunction = CompareFunction.Greater;
+        // state.StencilEnable = true;
+        // GraphicsDevice.DepthStencilState = state;
+        // cubeModel.Draw(_view, _projection, tint: Color.Gray);
+
+        cubeModel.Draw(_view, _projection);
+        _spriteBatch.End();
+
         base.Draw(gameTime);
+    }
+
+    public Vector3 ScreenToPlanePos(Vector2 screenPos)
+    {
+        Vector3 nearScreenPoint = new Vector3(screenPos.X, screenPos.Y, 0);
+        Vector3 farScreenPoint = new Vector3(screenPos.X, screenPos.Y, 1);
+        Vector3 nearWorldPoint = GraphicsDevice.Viewport.Unproject(nearScreenPoint, _projection, _view, Matrix.Identity);
+        Vector3 farWorldPoint = GraphicsDevice.Viewport.Unproject(farScreenPoint, _projection, _view, Matrix.Identity);
+
+        Vector3 direction = farWorldPoint - nearWorldPoint;
+
+        float zFactor = -nearWorldPoint.Y / direction.Y;
+        Vector3 zeroWorldPoint = nearWorldPoint + direction * zFactor;
+
+        return new Vector3(zeroWorldPoint.X, zeroWorldPoint.Y, zeroWorldPoint.Z);
     }
 }
