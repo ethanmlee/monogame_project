@@ -48,6 +48,18 @@
                 "SwapWindingOrder": "False",
                 "TextureFormat": "Compressed"
 		    }
+		},
+		"shaders":
+		{
+		    "path": "Shaders/*.fx",
+		    "recursive": "True",
+		    "action": "build",
+		    "importer": "EffectImporter",
+            "processor": "EffectProcessor",
+            "processorParam":
+            {
+                "DebugMode": "Auto"
+            }
 		}
 	}
 }

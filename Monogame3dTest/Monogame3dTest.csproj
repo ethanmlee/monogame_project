@@ -37,4 +37,7 @@
         <Link>Content\Graphics\Fbx_TurnipKid_Material_BaseMap_0.xnb</Link>
       </Content>
     </ItemGroup>
+    <ItemGroup>
+      <ClCompile Include="Content\Shaders\SimpleEffect.fx" />
+    </ItemGroup>
 </Project>
