@@ -22,6 +22,7 @@
         <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="MonoGame.Extended.Tweening" Version="3.8.0" />
         <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
         <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
         <PackageReference Include="Nopipeline.Task" Version="2.2.0" />
@@ -38,6 +39,7 @@
       </Content>
     </ItemGroup>
     <ItemGroup>
+      <ClCompile Include="Content\Shaders\LightingCode.hlsl" />
       <ClCompile Include="Content\Shaders\SimpleEffect.fx" />
     </ItemGroup>
 </Project>
