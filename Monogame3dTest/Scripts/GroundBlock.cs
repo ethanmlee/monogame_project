@@ -38,10 +38,11 @@ public class GroundBlock : Entity
 
     public override void Update(GameTime gameTime)
     {
-        // Matrix floatWaterMatrix = Matrix.CreateTranslation(0,
+        Matrix transformMatrix = Transform.GetTransformMatrix();
+        // transformMatrix *= Matrix.CreateTranslation(0,
         //     PerlinNoiseGenerator.GenerateNoise((float)(Transform.Position.X + gameTime.TotalGameTime.TotalSeconds * 5),
-        //         (float)(Transform.Position.Z + gameTime.TotalGameTime.TotalSeconds * 6.5), 8) * 0.2f, 0);
-        _model.WorldMatrix = Transform.GetTransformMatrix();
+        //         (float)(Transform.Position.Z + gameTime.TotalGameTime.TotalSeconds * 6.5), 8) * 0.1f, 0);
+        _model.WorldMatrix = transformMatrix;
     }
 
     public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

@@ -9,6 +9,9 @@
 
 #include "LightingCode.hlsl"
 
+// Global Variable declaration
+shared float _GlobalAmbientBrightness = 0.35;
+
 matrix _WorldMatrix;
 matrix _ViewMatrix;
 matrix _ProjectionMatrix;
@@ -53,10 +56,8 @@ float4 MainPS(VertexShaderOutput input) : COLOR
         outputColor = outputColor * (_HasTex * tex2D(_MainTex, input.UV) + (1 - _HasTex));
     }
 
-    outputColor = _IsUnlit ? outputColor : DistanceLighting(outputColor, input.WorldPos, float3(0, 1, 0));
-
-    
-    // outputColor -= abs(input.Normal.x) * 0.02;
+    outputColor = _IsUnlit ? outputColor : DistanceLighting(outputColor, input.WorldPos, float3(0, 1, 0), _GlobalAmbientBrightness);
+    outputColor -= abs(input.Normal.x) * 0.02;
     
     outputColor.a = 1;
     return saturate(outputColor);

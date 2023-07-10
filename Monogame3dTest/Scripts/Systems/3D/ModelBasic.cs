@@ -105,6 +105,11 @@ public class ModelBasic
         ParamIsUnlit = myEffect.Parameters["_IsUnlit"];
     }
 
+    public void SetBrightness(float brightness)
+    {
+        myEffect.Parameters["_GlobalAmbientBrightness"].SetValue(brightness);
+    }
+
     public void Draw(Matrix viewMatrix, Matrix projectionMatrix, Color? tint = null)
     {
         Color tintUnwrapped = tint ?? Color.White;

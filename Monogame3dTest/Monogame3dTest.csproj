@@ -40,6 +40,7 @@
     </ItemGroup>
     <ItemGroup>
       <ClCompile Include="Content\Shaders\LightingCode.hlsl" />
+      <ClCompile Include="Content\Shaders\PsxDither.fx" />
       <ClCompile Include="Content\Shaders\SimpleEffect.fx" />
     </ItemGroup>
 </Project>

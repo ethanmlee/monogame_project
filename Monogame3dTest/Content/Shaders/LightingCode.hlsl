@@ -1,9 +1,9 @@
-float4 DistanceLighting(float4 currentColor, float3 position, float3 lightPosition)
+float4 DistanceLighting(float4 currentColor, float3 position, float3 lightPosition, float ambientLight)
 {
     const int darknessDistance = 7;
     const float dist = saturate(distance(position, lightPosition) / darknessDistance);
     const float distSquared = dist * dist;
-    currentColor.rgb = lerp(currentColor.rgb, currentColor.rgb * 0.35, distSquared);
+    currentColor.rgb = lerp(currentColor.rgb, currentColor.rgb * ambientLight, distSquared);
     return currentColor;
 }
 
