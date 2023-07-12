@@ -40,7 +40,7 @@ public class Game1 : Game
     {
         base.Initialize();
 
-        GameScreen.Initialize(new Vector2(640, 360));
+        GameScreen.Initialize(new Vector2(640 * 1, 360 * 1));
         Globals.Graphics.PreferMultiSampling = true;
         Globals.Graphics.HardwareModeSwitch = false;
         Globals.Graphics.SynchronizeWithVerticalRetrace = false;
@@ -139,10 +139,19 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        // GameScreen.StartRendering();
+        DrawGame(gameTime, Keyboard.GetState().IsKeyDown(Keys.R));
+
+        base.Draw(gameTime);
+    }
+
+    public void DrawGame(GameTime gameTime, bool lowResBufer)
+    {
+        if (lowResBufer)
+            GameScreen.StartRendering();
         GraphicsDevice.Clear(Color.DarkSlateBlue);
         
-        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Begin();
+        GraphicsDevice.SamplerStates[0] = SamplerState.AnisotropicClamp;
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         
         // _waterPlane.Draw(_view, _projection);
@@ -151,22 +160,16 @@ public class Game1 : Game
         {
             entity.Draw(gameTime, _spriteBatch);
         }
-        
-        // Selection Cube
-        // var state = new DepthStencilState();
-        // state.DepthBufferFunction = CompareFunction.Greater;
-        // state.StencilEnable = true;
-        // GraphicsDevice.DepthStencilState = state;
-        // cubeModel.Draw(_view, _projection, tint: Color.Gray);
 
         _cubeModel.Draw(ViewMatrix, ProjectionMatrix);
         CustomDraw.DrawGrid(GraphicsDevice, 15, 1, Matrix.CreateRotationX(MathF.PI / 2) * Matrix.CreateTranslation(-7.5f, 0.5f, -7.5f));
         _spriteBatch.End();
 
-        // GameScreen.EndRendering();
-        // GameScreen.DrawRenderBufferToScreen(_spriteBatch);
-        
-        base.Draw(gameTime);
+        if (lowResBufer)
+        {
+            GameScreen.EndRendering();
+            GameScreen.DrawRenderBufferToScreen(_spriteBatch);
+        }
     }
 
     public Vector3 ScreenToPlanePos(Vector2 screenPos, float desiredY = 0)

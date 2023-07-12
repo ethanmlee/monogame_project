@@ -19,8 +19,7 @@ public static class GameScreen
     public static void Initialize(Vector2 renderResolution)
     {
         RenderResolution = renderResolution;
-        _mainRenderTarget = new RenderTarget2D(GraphicsDevice, (int)RenderResolution.X, (int)RenderResolution.Y, true,
-            GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24,
+        _mainRenderTarget = new RenderTarget2D(GraphicsDevice, (int)RenderResolution.X, (int)RenderResolution.Y, false, SurfaceFormat.NormalizedByte4, GraphicsDevice.PresentationParameters.DepthStencilFormat,
             GraphicsDevice.PresentationParameters.MultiSampleCount, RenderTargetUsage.PlatformContents);
 
         int maxScaleFactor = CalculateMaxScaleFactor(new Vector2(
@@ -79,9 +78,9 @@ public static class GameScreen
         // spriteBatch.Draw(_bgTex, Vector2.Zero, GraphicsDevice.Viewport.Bounds, Color.Gray, 0, Vector2.Zero, 3f, SpriteEffects.None, 0);
         // spriteBatch.End();
         
-        Texture2D psxDitherTexture = Globals.Content.Load<Texture2D>("Graphics/psx_dither");
+        Texture2D psxDitherTexture = Globals.Content.Load<Texture2D>("Graphics/Bayer8x8");
         _psxDitherEffect.Parameters["_DitherPattern"].SetValue(psxDitherTexture);
-        _psxDitherEffect.Parameters["_Colors"].SetValue(64f);
+        _psxDitherEffect.Parameters["_Colors"].SetValue(32f);
         _psxDitherEffect.Parameters["_MainTex_TexelSize"].SetValue(new Vector4(1f / _mainRenderTarget.Width,
             1f / _mainRenderTarget.Height, _mainRenderTarget.Width, _mainRenderTarget.Height));
         _psxDitherEffect.Parameters["_DitherPattern_TexelSize"].SetValue(new Vector4(1f / psxDitherTexture.Width,

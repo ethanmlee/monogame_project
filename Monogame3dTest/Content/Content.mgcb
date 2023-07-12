@@ -222,3 +222,15 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Debug
 /build:Shaders/PsxDither.fx
+
+#begin Graphics/Bayer8x8.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=True
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Graphics/Bayer8x8.png

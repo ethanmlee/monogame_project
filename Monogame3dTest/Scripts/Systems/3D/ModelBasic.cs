@@ -70,25 +70,20 @@ public class ModelBasic
         }
         UseIncludedTexture = useIncludedTexture;
         
-        foreach (ModelMesh mesh in Model.Meshes)
+        foreach (var part in Model.Meshes.SelectMany(mesh => mesh.MeshParts))
         {
-            foreach (ModelMeshPart part in mesh.MeshParts)
+            // Get the "included" texture from the mesh itself
+            if (UseIncludedTexture)
             {
-                // Get the "included" texture from the mesh itself
-                if (UseIncludedTexture)
+                foreach (EffectParameter parameter in part.Effect.Parameters)
                 {
-                    foreach (EffectParameter parameter in part.Effect.Parameters)
-                    {
-                        if (parameter.Name == "Texture")
-                        {
-                            Texture = parameter.GetValueTexture2D();
-                            break;
-                        }
-                    }
+                    if (parameter.Name != "Texture") continue;
+                    Texture = parameter.GetValueTexture2D();
+                    break;
                 }
-                
-                part.Effect = myEffect;
             }
+                
+            part.Effect = myEffect;
         }
 
         DiffuseColor = diffuseColor ?? Color.White;
