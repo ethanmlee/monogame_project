@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactProtect", "ContactPr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Monogame3dTest", "Monogame3dTest\Monogame3dTest.csproj", "{37B44547-2BE9-4230-9D04-691BAB72E42C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoxelEngine", "VoxelEngine\VoxelEngine.csproj", "{0F70EB23-1018-4B57-BB02-C9CC53D14006}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37B44547-2BE9-4230-9D04-691BAB72E42C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

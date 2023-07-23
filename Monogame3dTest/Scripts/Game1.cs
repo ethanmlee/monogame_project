@@ -44,7 +44,7 @@ public class Game1 : Game
         Globals.Graphics.PreferMultiSampling = true;
         Globals.Graphics.HardwareModeSwitch = false;
         Globals.Graphics.SynchronizeWithVerticalRetrace = false;
-        Globals.Graphics.IsFullScreen = true;
+        Globals.Graphics.IsFullScreen = false;
         IsFixedTimeStep = true;
         IsMouseVisible = true;
         Globals.Graphics.ApplyChanges();

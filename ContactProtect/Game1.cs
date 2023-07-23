@@ -67,9 +67,9 @@ public class Game1 : Game
         Graphics.SynchronizeWithVerticalRetrace = true;
         
         // Sets the window size
-        Graphics.PreferredBackBufferWidth = BaseRenderWidth * 10;
-        Graphics.PreferredBackBufferHeight = BaseRenderHeight * 10;
-        Graphics.IsFullScreen = true;
+        Graphics.PreferredBackBufferWidth = BaseRenderWidth * 1;
+        Graphics.PreferredBackBufferHeight = BaseRenderHeight * 1;
+        Graphics.IsFullScreen = false;
         Window.AllowUserResizing = true;
         Graphics.HardwareModeSwitch = false;
         Graphics.ApplyChanges();
