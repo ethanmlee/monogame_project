@@ -15,12 +15,15 @@ namespace VoxelEngine
         public static Matrix ProjectionMatrix;
 
         public static VoxelWorld VoxelWorld;
+        public static readonly BoundingFrustum BoundingFrustum = new BoundingFrustum(Matrix.Identity);
 
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
         }
 
         protected override void Initialize()
@@ -47,12 +50,14 @@ namespace VoxelEngine
                 Exit();
 
             ViewMatrix = Matrix.CreateTranslation(-(VoxelData.worldSizeInChunks.X * VoxelData.chunkSize.X) / 2f,
-                             -144, -(VoxelData.worldSizeInChunks.Z * VoxelData.chunkSize.Z) / 2f) *
+                             -144, -(VoxelData.worldSizeInChunks.Z * VoxelData.chunkSize.Z) / 2f) * 
                          Matrix.CreateFromAxisAngle(Vector3.Up,
-                             (float)(MathF.PI / 4 + gameTime.TotalGameTime.TotalSeconds * 0.5f)) *
-                         Matrix.CreateFromAxisAngle(Vector3.Right, 0);
-                // Matrix.CreateTranslation(0f, 0f, -0);
-                
+                             (float)(MathF.PI / 4 + gameTime.TotalGameTime.TotalSeconds * 0.5f)) * 
+                         Matrix.CreateFromAxisAngle(Vector3.Right, 0) * 
+                         Matrix.CreateTranslation(0f, 0f, -0);
+
+            BoundingFrustum.Matrix = ViewMatrix * ProjectionMatrix;
+
             base.Update(gameTime);
         }
 

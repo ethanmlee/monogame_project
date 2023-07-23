@@ -42,7 +42,7 @@ public class VoxelWorld
         
         foreach (Chunk chunk in Chunks)
         {
-            chunk.Draw(graphicsDevice);
+            chunk.Draw();
         }
     }
 

@@ -9,7 +9,8 @@ public static class VoxelData
 {
 
     public static readonly Vector3Int chunkSize = new Vector3Int(64, 64, 64); // Chunk size x and z must stay equal for rotation of rooms to work properly!!!
-    public static readonly Vector3Int worldSizeInChunks = new Vector3Int(8,4,8);
+    public static int ChunkSizeTotal => chunkSize.X * chunkSize.Y * chunkSize.Z;
+    public static readonly Vector3Int worldSizeInChunks = new Vector3Int(16,8,16);
 
     public static readonly float lightFalloff = 0.075f;
 

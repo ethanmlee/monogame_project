@@ -13,6 +13,10 @@ public class Chunk
     public ChunkCoord Coord;
     public VoxelState[] VoxelMap =
         new VoxelState[VoxelData.chunkSize.X * VoxelData.chunkSize.Y * VoxelData.chunkSize.Z];
+    
+    private VertexBufferBinding _binding;
+    private VertexBuffer _vb;
+    private IndexBuffer _ib;
 
     private readonly Vector3 _position;
 
@@ -36,8 +40,12 @@ public class Chunk
 
     private readonly VoxelWorld _world;
 
+    private readonly GraphicsDevice _graphicsDevice;
+
     public Chunk(ChunkCoord coord, VoxelWorld world, GraphicsDevice graphicsDevice)
     {
+        _graphicsDevice = graphicsDevice;
+        
         Coord = coord;
         _world = world;
         int vertCount = VoxelData.chunkSize.X * VoxelData.chunkSize.Y * VoxelData.chunkSize.Z * 8;
@@ -50,16 +58,15 @@ public class Chunk
         GenerateVoxelMap();
     }
 
-    public void Draw(GraphicsDevice graphicsDevice)
+    public void Draw()
     {
         if (_verticesArray.Length < 3) return;
-        var boundingFrustum = new BoundingFrustum(Game1.ViewMatrix * Game1.ProjectionMatrix);
         var bounding = new BoundingBox(_position, _position + VoxelData.chunkSize);
-        if (boundingFrustum.Contains(bounding) == ContainmentType.Disjoint) return;
+        if (Game1.BoundingFrustum.Contains(bounding) == ContainmentType.Disjoint) return;
         
         VoxelWorld.Effect.World = Matrix.CreateTranslation(_position);
         VoxelWorld.EffectPass.Apply();
-        graphicsDevice.DrawUserIndexedPrimitives(
+        _graphicsDevice.DrawUserIndexedPrimitives(
             PrimitiveType.TriangleList,
             _verticesArray, 0, _verticesArray.Length,
             _trianglesArray, 0, _trianglesArray.Length / 3
@@ -80,7 +87,6 @@ public class Chunk
                 Vector3 worldPos = voxelPos + _position;
                 VoxelMap[i] = new VoxelState(0);
                 var ySimplex = (simplex.GetData(worldPos.X, worldPos.Z, 0.5f)) * 8f + 128;
-                // var yVal = (SimplexNoise.Noise.CalcPixel2D((int)worldPos.X, (int)worldPos.Z, 0.01f) / 255f) * 8f + 32;
                 if (worldPos.Y <= ySimplex)
                 {
                     VoxelMap[i] = new VoxelState()
@@ -92,6 +98,11 @@ public class Chunk
             
             CreateMeshData();
             CreateMesh();
+            
+            _vertices.Clear();
+            _vertices.Capacity = 0;
+            _triangles.Clear();
+            _triangles.Capacity = 0;
         })).Start();
     }
 
