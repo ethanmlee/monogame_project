@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -10,8 +11,7 @@ using System.Collections.Generic;
 
 public class VoxelWorld
 {
-    public readonly Chunk[,,] Chunks = new Chunk[VoxelData.worldSizeInChunks.X, VoxelData.worldSizeInChunks.Y,
-        VoxelData.worldSizeInChunks.Z];
+    public readonly Hashtable Chunks = new Hashtable(); 
     
     public static BasicEffect Effect;
     public static EffectPass EffectPass;
@@ -27,7 +27,8 @@ public class VoxelWorld
             {
                 for (var z = 0; z < VoxelData.worldSizeInChunks.Z; z++)
                 {
-                    Chunks[x, y, z] = new Chunk(new ChunkCoord(x, y, z), this, graphicsDevice);
+                    Chunks.Add(new Vector3Int(x, y, z),
+                        new Chunk(new ChunkCoord(x, y, z), this, graphicsDevice));
                 }
             }
         }
@@ -40,7 +41,7 @@ public class VoxelWorld
         Effect.VertexColorEnabled = true;
         EffectPass = Effect.CurrentTechnique.Passes[0];
         
-        foreach (Chunk chunk in Chunks)
+        foreach (Chunk chunk in Chunks.Values)
         {
             chunk.Draw();
         }
@@ -51,7 +52,7 @@ public class VoxelWorld
         int x = (pos.X / VoxelData.chunkSize.X).FloorToInt();
         int y = (pos.Y / VoxelData.chunkSize.Y).FloorToInt();
         int z = (pos.Z / VoxelData.chunkSize.Z).FloorToInt();
-        return Chunks[x, y, z];
+        return Chunks[new Vector3Int(pos)] as Chunk;
     }
 
     public bool IsChunkInWorld(ChunkCoord chunkCoord)

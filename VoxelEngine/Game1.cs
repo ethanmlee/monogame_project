@@ -50,7 +50,7 @@ namespace VoxelEngine
                 Exit();
 
             ViewMatrix = Matrix.CreateTranslation(-(VoxelData.worldSizeInChunks.X * VoxelData.chunkSize.X) / 2f,
-                             -144, -(VoxelData.worldSizeInChunks.Z * VoxelData.chunkSize.Z) / 2f) * 
+                             -(VoxelData.worldSizeInChunks.Y * VoxelData.chunkSize.Y + 4), -(VoxelData.worldSizeInChunks.Z * VoxelData.chunkSize.Z) / 2f) * 
                          Matrix.CreateFromAxisAngle(Vector3.Up,
                              (float)(MathF.PI / 4 + gameTime.TotalGameTime.TotalSeconds * 0.5f)) * 
                          Matrix.CreateFromAxisAngle(Vector3.Right, 0) * 
