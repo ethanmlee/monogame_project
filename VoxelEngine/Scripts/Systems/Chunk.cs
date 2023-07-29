@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -71,11 +72,6 @@ public class Chunk
         VoxelWorld.Effect.World = Matrix.CreateTranslation(_position);
         VoxelWorld.EffectPass.Apply();
         _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, VoxelData.ChunkSizeTotal * 24);
-        // _graphicsDevice.DrawUserIndexedPrimitives(
-        //     PrimitiveType.TriangleList,
-        //     _vertices, 0, _vertices.Length,
-        //     _triangles, 0, _triangles.Length / 3
-        // );
     }
 
     public void GenerateVoxelMap()
@@ -84,8 +80,8 @@ public class Chunk
 
         var simplex = new SeamlessSimplexNoise(VoxelData.chunkSize.X * VoxelData.worldSizeInChunks.X, 1337);
 
-        new Thread((() =>
-        {
+        // Task.Factory.StartNew((() =>
+        // {
             for (var i = 0; i < VoxelMap.Length; i++)
             {
                 var voxelPos = IndexToVector(i);
@@ -107,7 +103,7 @@ public class Chunk
             var vertices = UpdateBlocks();
 
             CreateMesh();
-            
+
             VertexBuffer vb = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, vertices.Length,
                 BufferUsage.WriteOnly);
             vb.SetData(vertices);
@@ -118,7 +114,7 @@ public class Chunk
             _ib.SetData(_triangles);
 
             // _vertices = Array.Empty<VertexPositionColor>();
-        })).Start();
+        // }));
     }
 
     public void CreateMeshData()
