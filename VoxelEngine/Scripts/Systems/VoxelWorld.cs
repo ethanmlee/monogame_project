@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -13,12 +15,19 @@ public class VoxelWorld
 {
     public readonly Hashtable Chunks = new Hashtable(); 
     
-    public static BasicEffect Effect;
+    public static Effect Effect;
     public static EffectPass EffectPass;
+    
+    public readonly EffectParameter ParamWorldMatrix;
+    public readonly EffectParameter ParamViewMatrix;
+    public readonly EffectParameter ParamProjectionMatrix;
 
     public VoxelWorld(GraphicsDevice graphicsDevice)
     {
-        Effect = new BasicEffect(graphicsDevice);
+        Effect = Game1.ContentManager.Load<Effect>("Shaders/SimpleEffect");
+        ParamWorldMatrix = Effect.Parameters["_WorldMatrix"];
+        ParamViewMatrix = Effect.Parameters["_ViewMatrix"];
+        ParamProjectionMatrix = Effect.Parameters["_ProjectionMatrix"];
 
         // Populate room map
         for (var x = 0; x < VoxelData.worldSizeInChunks.X; x++)
@@ -27,18 +36,28 @@ public class VoxelWorld
             {
                 for (var z = 0; z < VoxelData.worldSizeInChunks.Z; z++)
                 {
-                    Chunks.Add(new Vector3Int(x, y, z),
-                        new Chunk(new ChunkCoord(x, y, z), this, graphicsDevice));
+                    var newChunk = new Chunk(new ChunkCoord(x, y, z), this, graphicsDevice);
+                    Chunks.Add(new ChunkCoord(x, y, z), newChunk);
                 }
             }
+        }
+        
+        Task.WhenAll(Chunks.Values.Cast<Chunk>().Select((chunk => chunk.GenerateVoxelMap()))).Wait();
+    }
+
+    public void Update()
+    {
+        foreach (Chunk chunk in Chunks.Values)
+        {
+            chunk.Update();
         }
     }
 
     public void Draw(GraphicsDevice graphicsDevice)
     {
-        Effect.View = Game1.ViewMatrix;
-        Effect.Projection = Game1.ProjectionMatrix;
-        Effect.VertexColorEnabled = true;
+        graphicsDevice.Clear(Color.Black);
+        ParamViewMatrix.SetValue(Game1.ViewMatrix);
+        ParamProjectionMatrix.SetValue(Game1.ProjectionMatrix);
         EffectPass = Effect.CurrentTechnique.Passes[0];
         
         foreach (Chunk chunk in Chunks.Values)
@@ -47,7 +66,7 @@ public class VoxelWorld
         }
     }
 
-    public Chunk GetChunkFromVector3(Vector3 pos)
+    public Chunk GetChunk(Vector3 pos)
     {
         int x = (pos.X / VoxelData.chunkSize.X).FloorToInt();
         int y = (pos.Y / VoxelData.chunkSize.Y).FloorToInt();
@@ -55,51 +74,34 @@ public class VoxelWorld
         return Chunks[new Vector3Int(pos)] as Chunk;
     }
 
+    public Chunk GetChunk(ChunkCoord chunkCoord)
+    {
+        return Chunks[chunkCoord] as Chunk;
+    }
+    
+    public ChunkCoord GetChunkCoord(Vector3 pos)
+    {
+        int x = (pos.X / VoxelData.chunkSize.X).FloorToInt();
+        int y = (pos.Y / VoxelData.chunkSize.Y).FloorToInt();
+        int z = (pos.Z / VoxelData.chunkSize.Z).FloorToInt();
+        return new ChunkCoord(x, y, z);
+    }
+    
+    public ChunkCoord GetChunkCoord(Vector3Int pos)
+    {
+        int x = (int)MathF.Floor((float)pos.X / VoxelData.chunkSize.X);
+        int y = (int)MathF.Floor((float)pos.Y / VoxelData.chunkSize.Y);
+        int z = (int)MathF.Floor((float)pos.Z / VoxelData.chunkSize.Z);
+        return new ChunkCoord(x, y, z);
+    }
+
     public bool IsChunkInWorld(ChunkCoord chunkCoord)
     {
-        if (chunkCoord.X < 0 && chunkCoord.X > VoxelData.worldSizeInChunks.X) return false;
-        if (chunkCoord.Y < 0 && chunkCoord.Y > VoxelData.worldSizeInChunks.Y) return false;
-        if (chunkCoord.Z < 0 && chunkCoord.Z > VoxelData.worldSizeInChunks.Z) return false;
-
-        return true;
+        return Chunks.Contains(chunkCoord);
     }
 
     public bool IsChunkInWorld(Vector3 chunkCoordVector3)
     {
         return IsChunkInWorld(new ChunkCoord(chunkCoordVector3));
     }
-}
-
-
-[System.Serializable]
-public class Room
-{
-    public Openings openings;
-    public int roomTypeID;
-    public int rotations;
-
-    public Room(Openings _openings, int _roomTypeID, int _rotations)
-    {
-        //// EXAMPLE: How to add masks to a flag
-        //openings |= Openings.Front | Openings.Left;
-
-        //// EXAMPLE: How to remove masks from a flag
-        //openings &= ~Openings.Front & ~Openings.Left;
-
-        openings = _openings;
-        roomTypeID = _roomTypeID;
-        rotations = _rotations;
-    }
-
-    [System.Flags]
-    public enum Openings
-    {
-        Front = 1 << 1,
-        Back = 1 << 2,
-        Up = 1 << 3,
-        Down = 1 << 4,
-        Left = 1 << 5,
-        Right = 1 << 6,
-        Count
-    };
 }

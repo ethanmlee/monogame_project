@@ -54,6 +54,15 @@ public struct Vector3Int : IEquatable<Vector3Int>, IEquatable<Vector3>
     {
         return new Vector3Int(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
     }
+    
+    public static Vector3Int operator %(Vector3Int a, Vector3Int b)
+    {
+        Vector3Int finalValue = new Vector3Int(a.X % b.X, a.Y % b.Y, a.Z % b.Z);
+        if (finalValue.X < 0) finalValue.X += b.X;
+        if (finalValue.Y < 0) finalValue.Y += b.Y;
+        if (finalValue.Z < 0) finalValue.Z += b.Z;
+        return finalValue;
+    }
 
     public static Vector3 operator +(Vector3Int a, Vector3 b)
     {

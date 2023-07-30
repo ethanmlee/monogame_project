@@ -10,7 +10,7 @@ public static class VoxelData
 
     public static readonly Vector3Int chunkSize = new Vector3Int(16, 16, 16); // Chunk size x and z must stay equal for rotation of rooms to work properly!!!
     public static int ChunkSizeTotal => chunkSize.X * chunkSize.Y * chunkSize.Z;
-    public static readonly Vector3Int worldSizeInChunks = new Vector3Int(1,1,1);
+    public static readonly Vector3Int worldSizeInChunks = new Vector3Int(24,1,24);
 
     public static readonly float lightFalloff = 0.075f;
 
@@ -82,6 +82,39 @@ public static class VoxelData
         new Vector2(1.0f, 0.0f),
         new Vector2(1.0f, 1.0f),
 
+    };
+
+    public static readonly Vector3[,] voxelAoChecks = new Vector3[24,2]
+    {
+        { -Vector3.UnitX, -Vector3.UnitY },
+        { -Vector3.UnitX, Vector3.UnitY },
+        { Vector3.UnitX, -Vector3.UnitY },
+        { Vector3.UnitX, Vector3.UnitY },
+        
+        { Vector3.UnitX, -Vector3.UnitY },
+        { Vector3.UnitX, Vector3.UnitY },
+        { -Vector3.UnitX, -Vector3.UnitY },
+        { -Vector3.UnitX, Vector3.UnitY },
+        
+        { -Vector3.UnitX, -Vector3.UnitZ },
+        { -Vector3.UnitX, Vector3.UnitZ },
+        { Vector3.UnitX, -Vector3.UnitZ },
+        { Vector3.UnitX, Vector3.UnitZ },
+        
+        { Vector3.UnitX, -Vector3.UnitZ },
+        { Vector3.UnitX, Vector3.UnitZ },
+        { -Vector3.UnitX, -Vector3.UnitZ },
+        { -Vector3.UnitX, Vector3.UnitZ },
+        
+        { Vector3.UnitZ, -Vector3.UnitY },
+        { Vector3.UnitZ, Vector3.UnitY },
+        { -Vector3.UnitZ, -Vector3.UnitY },
+        { -Vector3.UnitZ, Vector3.UnitY },
+        
+        { -Vector3.UnitZ, -Vector3.UnitY },
+        { -Vector3.UnitZ, Vector3.UnitY },
+        { Vector3.UnitZ, -Vector3.UnitY },
+        { Vector3.UnitZ, Vector3.UnitY },
     };
 
 }
