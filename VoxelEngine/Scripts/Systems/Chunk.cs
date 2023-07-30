@@ -1,16 +1,11 @@
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.Extended.Tweening;
 
 namespace VoxelEngine.Scripts.Systems;
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 public class Chunk
 {
@@ -33,8 +28,6 @@ public class Chunk
     // private readonly Vector3[] _normals;
 
     private readonly Queue<Vector3> _lightBfsQueue = new();
-
-    private readonly Queue<Vector3Int> _blocksToUpdate = new();
 
     private readonly VoxelWorld _world;
 
@@ -65,8 +58,18 @@ public class Chunk
         }
         _ib = new IndexBuffer(_graphicsDevice, typeof(int), _triangles.Length, BufferUsage.WriteOnly);
         _ib.SetData(_triangles);
+        _vb = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, VoxelData.ChunkSizeTotal * 24,
+            BufferUsage.None);
+        _binding = new VertexBufferBinding(_vb);
 
         _position = Coord.Vector * VoxelData.chunkSize;
+    }
+    
+    public void Update()
+    {
+        if (!_isDirty) return;
+        _isDirty = false;
+        Task.Factory.StartNew(CreateMesh);
     }
 
     public void Draw()
@@ -74,12 +77,17 @@ public class Chunk
         if (_vertexCount <= 0) return;
         if (_binding.VertexBuffer == null) return;
         if (_ib == null) return;
-        var bounding = new BoundingBox(_position, _position + VoxelData.chunkSize);
+
+        Vector3 loopOffset = Vector3.Zero;
+        loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.worldSizeInChunks)) * (VoxelData.chunkSize * VoxelData.worldSizeInChunks);
+        loopOffset.Y = 0;
+        Vector3 newPos = _position + loopOffset;
+        var bounding = new BoundingBox(newPos, newPos + VoxelData.chunkSize);
         if (Game1.BoundingFrustum.Contains(bounding) == ContainmentType.Disjoint) return;
 
         _graphicsDevice.SetVertexBuffers(_binding);
         _graphicsDevice.Indices = _ib;
-        _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(_visibilityScale) * Matrix.CreateTranslation(_position));
+        _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(_visibilityScale) * Matrix.CreateTranslation(newPos));
         VoxelWorld.EffectPass.Apply();
         _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, VoxelData.ChunkSizeTotal * 36);
     }
@@ -97,8 +105,7 @@ public class Chunk
                 var voxelPos = IndexToVector(i);
                 Vector3 worldPos = voxelPos + _position;
                 VoxelMap[i] = new VoxelState(0);
-                var ySimplex = (simplex.GetData(worldPos.X, worldPos.Z, 0.5f)) * 8f +
-                               (VoxelData.chunkSize.Y * VoxelData.worldSizeInChunks.Y - 1);
+                var ySimplex = (simplex.GetData(worldPos.X, worldPos.Z, 0.5f)) * 8f + 30;
                 if (worldPos.Y <= ySimplex)
                 {
                     VoxelMap[i] = new VoxelState()
@@ -118,33 +125,16 @@ public class Chunk
         VoxelMap[PosToIndex(pos)].Index = index;
     }
 
-    public void Update()
-    {
-        if (!_isDirty) return;
-        _isDirty = false;
-        CreateMesh();
-    }
-
     public void CreateMeshData()
     {
         ClearMeshData();
-        
-        for (var z = 0; z < VoxelData.chunkSize.Z; z++)
-        for (var y = 0; y < VoxelData.chunkSize.Y; y++)
-        for (var x = 0; x < VoxelData.chunkSize.X; x++)
-            UpdateMeshData(new Vector3(x, y, z));
     }
 
-    public void CreateMesh()
+    public Task CreateMesh()
     {
-        var vertices = UpdateBlocks();
-        _vb ??= new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, vertices.Length,
-            BufferUsage.None);
-        _vb.SetData(vertices);
-        _binding = new VertexBufferBinding(_vb);
-        // Cannot dispose of vb here. Binding stores a reference to it, so it must stay in memory
+        var task = Task.Factory.StartNew(() => _vb.SetData(UpdateBlocks()));
 
-        _visibilityScale = 1f;
+        return task;
     }
 
     private void ClearMeshData()
@@ -155,7 +145,6 @@ public class Chunk
         // _uvs.Clear();
         // _normals.Clear();
         _lightBfsQueue.Clear();
-        _blocksToUpdate.Clear();
     }
     
     private bool IsVoxelInChunk(int x, int y, int z)
@@ -192,7 +181,6 @@ public class Chunk
             Vector3Int targetPos = pos % VoxelData.chunkSize;
             int chunkIndex = (targetChunk.PosToIndex(targetPos));
             return targetChunk.VoxelMap[chunkIndex].Index > 0;
-            // return false;
         }
         return VoxelMap[PosToIndex(pos)].Index > 0;
     }
@@ -201,7 +189,7 @@ public class Chunk
     {
         var result = new VertexPositionColor[VoxelData.ChunkSizeTotal * 24];
         int vertStride = 6 * 4;
-        _vertexCount = 0;
+        int totalVerts = 0;
 
         _random = new Random(Coord.X * Coord.Y * Coord.Z);
 
@@ -253,10 +241,14 @@ public class Chunk
                     result[blockIndex * vertStride + thisVertexCount] = (new VertexPositionColor(vertPos, Color.DarkGray *
                         (avgAo * horizontalBrightness * randomBlockBrightness)));
                     thisVertexCount++;
-                    _vertexCount++;
+                    totalVerts++;
                 }
             }
         }
+
+        _vertexCount = totalVerts;
+        
+        _visibilityScale = 1f;
 
         return result;
     }
@@ -313,14 +305,6 @@ public class Chunk
         }
 
         return attachedIndices;
-    }
-
-    private void UpdateMeshData(Vector3 pos)
-    {
-        if (VoxelMap[PosToIndex(pos)].Index == 0) return;
-        
-        // BLOCKS
-        _blocksToUpdate.Enqueue(new Vector3Int(pos));
     }
 
     private void AddTexture(int blockIdTest = 0)

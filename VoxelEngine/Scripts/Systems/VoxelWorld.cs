@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 public class VoxelWorld
 {
-    public readonly Hashtable Chunks = new Hashtable(); 
+    public readonly Dictionary<ChunkCoord, Chunk> Chunks = new Dictionary<ChunkCoord, Chunk>(); 
     
     public static Effect Effect;
     public static EffectPass EffectPass;
@@ -36,13 +36,21 @@ public class VoxelWorld
             {
                 for (var z = 0; z < VoxelData.worldSizeInChunks.Z; z++)
                 {
-                    var newChunk = new Chunk(new ChunkCoord(x, y, z), this, graphicsDevice);
-                    Chunks.Add(new ChunkCoord(x, y, z), newChunk);
+                    ChunkCoord coord = new ChunkCoord(x, y, z);
+                    var newChunk = new Chunk(coord, this, graphicsDevice);
+                    Chunks.Add(coord, newChunk);
                 }
             }
         }
         
-        Task.WhenAll(Chunks.Values.Cast<Chunk>().Select((chunk => chunk.GenerateVoxelMap()))).Wait();
+        GenerateAllChunks();
+    }
+
+    private async void GenerateAllChunks()
+    {
+        await Task.WhenAll(Chunks.Values.Select((chunk => chunk.GenerateVoxelMap())));
+
+        await Task.WhenAll(Chunks.Values.Select((chunk => chunk.CreateMesh())));
     }
 
     public void Update()
@@ -71,12 +79,12 @@ public class VoxelWorld
         int x = (pos.X / VoxelData.chunkSize.X).FloorToInt();
         int y = (pos.Y / VoxelData.chunkSize.Y).FloorToInt();
         int z = (pos.Z / VoxelData.chunkSize.Z).FloorToInt();
-        return Chunks[new Vector3Int(pos)] as Chunk;
+        return Chunks[new ChunkCoord(pos)] as Chunk;
     }
 
     public Chunk GetChunk(ChunkCoord chunkCoord)
     {
-        return Chunks[chunkCoord] as Chunk;
+        return Chunks[chunkCoord];
     }
     
     public ChunkCoord GetChunkCoord(Vector3 pos)
@@ -97,7 +105,7 @@ public class VoxelWorld
 
     public bool IsChunkInWorld(ChunkCoord chunkCoord)
     {
-        return Chunks.Contains(chunkCoord);
+        return Chunks.TryGetValue(chunkCoord, out var _);
     }
 
     public bool IsChunkInWorld(Vector3 chunkCoordVector3)
