@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Monogame3dTest", "Monogame3
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoxelEngine", "VoxelEngine\VoxelEngine.csproj", "{0F70EB23-1018-4B57-BB02-C9CC53D14006}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGame.ImGui", "Monogame.ImGui\MonoGame.ImGui\MonoGame.ImGui.csproj", "{0E48BC7A-322B-42E3-A25A-EBA0368556B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F70EB23-1018-4B57-BB02-C9CC53D14006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E48BC7A-322B-42E3-A25A-EBA0368556B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E48BC7A-322B-42E3-A25A-EBA0368556B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E48BC7A-322B-42E3-A25A-EBA0368556B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E48BC7A-322B-42E3-A25A-EBA0368556B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

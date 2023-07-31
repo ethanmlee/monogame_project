@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -8,6 +9,7 @@ using MonoGame.Extended.Input;
 using MonoGame.Extended.Tweening;
 using VoxelEngine.Scripts;
 using VoxelEngine.Scripts.Systems;
+using MonoGame.ImGui;
 
 namespace VoxelEngine
 {
@@ -35,29 +37,38 @@ namespace VoxelEngine
 
         public bool ShowDebugOverlay = false;
 
+        private SelectionCube _selectionCube = new SelectionCube();
+        private SkySphere _skySphere = new SkySphere();
+
+        public ImGuiRenderer ImGuiRenderer;
+
+        private int _brushSize = 1;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             ContentManager = Content;
-            IsMouseVisible = true;
+            IsMouseVisible = false;
 
             _graphics.GraphicsProfile = GraphicsProfile.HiDef;
         }
 
         protected override void Initialize()
         {
-            _graphics.PreferredBackBufferWidth *= 2;
-            _graphics.PreferredBackBufferHeight *= 2;
-            _graphics.SynchronizeWithVerticalRetrace = false;
+            _graphics.PreferredBackBufferWidth *= 4;
+            _graphics.PreferredBackBufferHeight *= 4;
+            _graphics.SynchronizeWithVerticalRetrace = true;
+            IsFixedTimeStep = true;
             _graphics.ApplyChanges();
             ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(60), (float)_graphics.PreferredBackBufferWidth / (float)_graphics.PreferredBackBufferHeight, 0.1f, 1000f);
 
             MouseExtended.SetPosition(_startMousePoint);
             IsMouseVisible = false;
-            
-            Randomizer.Range(0, 1);
-            
+
+            ImGuiRenderer = new ImGuiRenderer(this).Initialize().RebuildFontAtlas();
+            ImGui.GetIO().ConfigFlags = ImGuiConfigFlags.DockingEnable;
+
             base.Initialize();
         }
 
@@ -65,18 +76,17 @@ namespace VoxelEngine
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            _selectionCube.LoadContent(GraphicsDevice, ContentManager);
+            _skySphere.LoadContent(ContentManager);
+
             VoxelWorld = new VoxelWorld(GraphicsDevice);
         }
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
-                Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-            IsMouseVisible = !IsActive;
-
             var keyboardState = KeyboardExtended.GetState();
             var mouseState = MouseExtended.GetState();
+            IsMouseVisible = !IsActive || ShowDebugOverlay;
 
             if (keyboardState.WasKeyJustDown(Keys.F3)) ShowDebugOverlay = !ShowDebugOverlay;
             if (keyboardState.WasKeyJustDown(Keys.G))
@@ -94,10 +104,14 @@ namespace VoxelEngine
 
             // Rotation
             var mouseDelta = mouseState.Position - _startMousePoint;
-            CamEulerAngles.X += -mouseDelta.Y * 0.001f;
-            CamEulerAngles.Y += -mouseDelta.X * 0.001f;
+            if (IsMouseVisible) mouseDelta = Point.Zero;
+            if (mouseDelta.ToVector2().LengthSquared() > 1)
+            {
+                CamEulerAngles.X += -mouseDelta.Y * 0.001f;
+                CamEulerAngles.Y += -mouseDelta.X * 0.001f;
+            }
             Matrix rotationMatrix = Matrix.CreateRotationX(CamEulerAngles.X) * Matrix.CreateRotationY(CamEulerAngles.Y);
-            if (IsActive) MouseExtended.SetPosition(_startMousePoint);
+            if (!IsMouseVisible) MouseExtended.SetPosition(_startMousePoint);
 
             // Flying Position
             var moveInput = new Vector3((keyboardState.IsKeyDown(Keys.D) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.A) ? 1 : 0), (keyboardState.IsKeyDown(Keys.Space) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.LeftShift) ? 1 : 0), (keyboardState.IsKeyDown(Keys.W) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.S) ? 1 : 0));
@@ -108,17 +122,19 @@ namespace VoxelEngine
             ViewMatrix = Matrix.CreateLookAt(CamPos, CamPos + Vector3.Transform(Vector3.Forward, rotationMatrix), Vector3.Up);
 
             BoundingFrustum.Matrix = ViewMatrix * ProjectionMatrix;
-            
+
+            Vector3 voxelAddPos = Vector3.Round(CamPos + rotationMatrix.Forward * 6 - Vector3.One / 2) + Vector3.One / 2;
+            if (mouseState.WasButtonJustDown(MouseButton.Right))
+            {
+                VoxelWorld.SetVoxel(voxelAddPos, 1);
+            }
             if (mouseState.WasButtonJustDown(MouseButton.Left))
             {
-                Vector3 voxelAddPos = CamPos + rotationMatrix.Forward * 6;
-                ChunkCoord coord = VoxelWorld.GetChunkCoord(voxelAddPos);
-                if (VoxelWorld.IsChunkInWorld(coord))
-                {
-                    Chunk chunk = VoxelWorld.GetChunk(coord);
-                    chunk.SetVoxel(new Vector3Int(voxelAddPos) % VoxelData.chunkSize, 1);
-                }
+                VoxelWorld.SetVoxel(voxelAddPos, 0);
             }
+            _selectionCube.Position = Vector3.Lerp(_selectionCube.Position, voxelAddPos,
+                25f * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            _selectionCube.Update(gameTime);
             
             VoxelWorld.Update();
             Tweener.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -129,15 +145,20 @@ namespace VoxelEngine
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-
+            
+            _spriteBatch.Begin(blendState: BlendState.Opaque);
             // Set the desired winding order to clockwise
             RasterizerState rasterizerStateCw = new RasterizerState
             {
                 CullMode = CullMode.CullClockwiseFace
             };
             GraphicsDevice.RasterizerState = rasterizerStateCw;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
+            GraphicsDevice.Clear(Color.Black);
+            _skySphere.Draw(GraphicsDevice);
             VoxelWorld.Draw(GraphicsDevice);
+            _selectionCube.Draw();
 
             if (ShowDebugOverlay)
             {
@@ -145,8 +166,29 @@ namespace VoxelEngine
                 CustomDraw.DrawGrid(GraphicsDevice, VoxelData.chunkSize.X, 1,
                     Matrix.CreateRotationX(MathF.PI / 2) * Matrix.CreateTranslation(nearestChunkFloorPlane));
             }
+            _spriteBatch.End();
 
             base.Draw(gameTime);
+            
+            if (!ShowDebugOverlay) return;
+            _spriteBatch.Begin();
+            ImGuiRenderer.BeginLayout(gameTime);
+            ImGui.DockSpaceOverViewport(null, ImGuiDockNodeFlags.PassthruCentralNode);
+
+            ImGui.BeginMainMenuBar();
+            
+            ImGui.EndMainMenuBar();
+
+            ImGui.Begin("Stats");
+                ImGui.Text("Mem: " + GC.GetTotalMemory(true).ToString());
+                ImGui.Text("FPS: " + 1000f / gameTime.ElapsedGameTime.TotalMilliseconds);
+            ImGui.End();
+            
+            ImGui.Begin("Tools");
+                ImGui.SliderInt("Brush Size", ref _brushSize, 1, 5);
+            ImGui.End();
+            ImGuiRenderer.EndLayout();
+            _spriteBatch.End();
         }
     }
 }

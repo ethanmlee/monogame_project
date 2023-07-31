@@ -63,7 +63,6 @@ public class VoxelWorld
 
     public void Draw(GraphicsDevice graphicsDevice)
     {
-        graphicsDevice.Clear(Color.Black);
         ParamViewMatrix.SetValue(Game1.ViewMatrix);
         ParamProjectionMatrix.SetValue(Game1.ProjectionMatrix);
         EffectPass = Effect.CurrentTechnique.Passes[0];
@@ -72,6 +71,35 @@ public class VoxelWorld
         {
             chunk.Draw();
         }
+    }
+
+    public void SetVoxel(Vector3 worldPos, byte index) 
+    {
+        ChunkCoord coord = GetChunkCoord(worldPos);
+        if (!IsChunkInWorld(coord)) return;
+        
+        Chunk chunk = GetChunk(coord);
+        Vector3Int posInChunk = new Vector3Int(worldPos) % VoxelData.chunkSize;
+        chunk.SetVoxel(posInChunk, index);
+
+        if (posInChunk.X == 0)
+            RefreshChunk(new ChunkCoord(coord.X - 1, coord.Y, coord.Z));
+        if (posInChunk.X == VoxelData.chunkSize.X - 1) 
+            RefreshChunk(new ChunkCoord(coord.X + 1, coord.Y, coord.Z));
+        if (posInChunk.Y == 0)
+            RefreshChunk(new ChunkCoord(coord.X, coord.Y - 1, coord.Z));
+        if (posInChunk.Y == VoxelData.chunkSize.Y - 1) 
+            RefreshChunk(new ChunkCoord(coord.X, coord.Y + 1, coord.Z));
+        if (posInChunk.Z == 0)
+            RefreshChunk(new ChunkCoord(coord.X, coord.Y, coord.Z - 1));
+        if (posInChunk.Z == VoxelData.chunkSize.Z - 1) 
+            RefreshChunk(new ChunkCoord(coord.X, coord.Y, coord.Z + 1));
+    }
+
+    public void RefreshChunk(ChunkCoord coord)
+    {
+        if (!IsChunkInWorld(coord)) return;
+        GetChunk(coord).SetDirty();
     }
 
     public Chunk GetChunk(Vector3 pos)

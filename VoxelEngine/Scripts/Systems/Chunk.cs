@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using LibNoise;
+using LibNoise.Primitive;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -14,35 +16,28 @@ public class Chunk
         new VoxelState[VoxelData.chunkSize.X * VoxelData.chunkSize.Y * VoxelData.chunkSize.Z];
     
     private VertexBufferBinding _binding;
-    private IndexBuffer _ib;
+    private static IndexBuffer _ib;
     private VertexBuffer _vb;
 
     private readonly Vector3 _position;
 
     private int _vertexCount = 0;
-    private int _vertexIndex;
 
     // Triangle Indices
     private static int[] _triangles;
     // private readonly Vector3[] _uvs;
-    // private readonly Vector3[] _normals;
-
-    private readonly Queue<Vector3> _lightBfsQueue = new();
 
     private readonly VoxelWorld _world;
 
     private readonly GraphicsDevice _graphicsDevice;
 
-    public float _visibilityScale = 0f;
-
     private bool _isDirty = false;
-
-    private Random _random;
+    
+    private static readonly SimplexPerlin Perlin = new SimplexPerlin(1337, NoiseQuality.Best);
 
     public Chunk(ChunkCoord coord, VoxelWorld world, GraphicsDevice graphicsDevice)
     {
         _graphicsDevice = graphicsDevice;
-        _random = new Random();
 
         Coord = coord;
         _world = world;
@@ -55,9 +50,10 @@ public class Chunk
             {
                 _triangles[i] = pattern[i % 6] + ((int)MathF.Floor(i / 6f) * 4);
             }
+            
+            _ib = new IndexBuffer(_graphicsDevice, typeof(int), _triangles.Length, BufferUsage.WriteOnly);
+            _ib.SetData(_triangles);
         }
-        _ib = new IndexBuffer(_graphicsDevice, typeof(int), _triangles.Length, BufferUsage.WriteOnly);
-        _ib.SetData(_triangles);
         _vb = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, VoxelData.ChunkSizeTotal * 24,
             BufferUsage.None);
         _binding = new VertexBufferBinding(_vb);
@@ -78,8 +74,7 @@ public class Chunk
         if (_binding.VertexBuffer == null) return;
         if (_ib == null) return;
 
-        Vector3 loopOffset = Vector3.Zero;
-        loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.worldSizeInChunks)) * (VoxelData.chunkSize * VoxelData.worldSizeInChunks);
+        var loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.worldSizeInChunks)) * (VoxelData.chunkSize * VoxelData.worldSizeInChunks);
         loopOffset.Y = 0;
         Vector3 newPos = _position + loopOffset;
         var bounding = new BoundingBox(newPos, newPos + VoxelData.chunkSize);
@@ -87,26 +82,27 @@ public class Chunk
 
         _graphicsDevice.SetVertexBuffers(_binding);
         _graphicsDevice.Indices = _ib;
-        _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(_visibilityScale) * Matrix.CreateTranslation(newPos));
+        _world.ParamWorldMatrix.SetValue(Matrix.CreateTranslation(newPos));
         VoxelWorld.EffectPass.Apply();
         _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, VoxelData.ChunkSizeTotal * 36);
+        _graphicsDevice.SetVertexBuffers(null);
     }
 
     public Task GenerateVoxelMap()
     {
         ClearMeshData();
 
-        var simplex = new SeamlessSimplexNoise(VoxelData.chunkSize.X * VoxelData.worldSizeInChunks.X, 1337);
+        // var simplex = new SeamlessSimplexNoise(VoxelData.chunkSize.X * VoxelData.worldSizeInChunks.X, 1337);
 
         return Task.Factory.StartNew((() =>
         {
             for (var i = 0; i < VoxelMap.Length; i++)
             {
                 var voxelPos = IndexToVector(i);
-                Vector3 worldPos = voxelPos + _position;
+                Vector3 worldPos = (voxelPos + _position);
                 VoxelMap[i] = new VoxelState(0);
-                var ySimplex = (simplex.GetData(worldPos.X, worldPos.Z, 0.5f)) * 8f + 30;
-                if (worldPos.Y <= ySimplex)
+                // var ySimplex = (simplex.GetData(worldPos.X, worldPos.Z, 0.5f)) * 8f + 30;
+                if (worldPos.Y <= Perlin.GetValue(worldPos.X * 0.01f, 30, worldPos.Z * 0.01f) * 8f + 30)
                 {
                     VoxelMap[i] = new VoxelState()
                     {
@@ -125,6 +121,11 @@ public class Chunk
         VoxelMap[PosToIndex(pos)].Index = index;
     }
 
+    public void SetDirty()
+    {
+        _isDirty = true;
+    }
+
     public void CreateMeshData()
     {
         ClearMeshData();
@@ -132,19 +133,17 @@ public class Chunk
 
     public Task CreateMesh()
     {
-        var task = Task.Factory.StartNew(() => _vb.SetData(UpdateBlocks()));
+        var task = Task.Factory.StartNew(() => UpdateBlocks());
 
         return task;
     }
 
     private void ClearMeshData()
     {
-        _vertexIndex = 0;
         // _vertices.Clear();
         // _triangles.Clear();
         // _uvs.Clear();
         // _normals.Clear();
-        _lightBfsQueue.Clear();
     }
     
     private bool IsVoxelInChunk(int x, int y, int z)
@@ -185,18 +184,18 @@ public class Chunk
         return VoxelMap[PosToIndex(pos)].Index > 0;
     }
 
-    private VertexPositionColor[] UpdateBlocks()
+    private void UpdateBlocks()
     {
         var result = new VertexPositionColor[VoxelData.ChunkSizeTotal * 24];
         int vertStride = 6 * 4;
         int totalVerts = 0;
 
-        _random = new Random(Coord.X * Coord.Y * Coord.Z);
+        var random = new Random(Coord.X * Coord.Y * Coord.Z);
 
         for (int blockIndex = 0; blockIndex < VoxelMap.Length; blockIndex++)
         {
             var blockCurrent = VoxelMap[blockIndex];
-            double randomVal = _random.NextDouble();
+            double randomVal = random.NextDouble();
             if (blockCurrent.Index == 0) continue;
             
             var blockPos = IndexToVector(blockIndex);
@@ -223,17 +222,19 @@ public class Chunk
                     Vector3Int side1 = new Vector3Int(newCheck + VoxelData.voxelAoChecks[faceIndex * 4 + vertexIndex, 0]);
                     Vector3Int side2 = new Vector3Int(newCheck + VoxelData.voxelAoChecks[faceIndex * 4 + vertexIndex, 1]);
                     Vector3Int corner = new Vector3Int(side1 + side2 - newCheck);
-                    if (CheckVoxelOccupied(side1) && CheckVoxelOccupied(side2))
+                    bool side1Check = CheckVoxelOccupied(side1);
+                    bool side2Check = CheckVoxelOccupied(side2);
+                    if (side1Check && side2Check)
                     {
                         avgAo = 3;
                     }
                     else
                     {
-                        avgAo = ((CheckVoxelOccupied(side1) ? 1 : 0) +
-                                 (CheckVoxelOccupied(side2) ? 1 : 0) +
+                        avgAo = ((side1Check ? 1 : 0) +
+                                 (side2Check ? 1 : 0) +
                                  (CheckVoxelOccupied(corner) ? 1 : 0));
                     }
-                    avgAo *= 0.75f;
+                    avgAo *= 0.5f;
                     avgAo /= 3f;
                     avgAo = 1f - avgAo;
                     avgAo = MathF.Min(avgAo, 1f);
@@ -247,10 +248,8 @@ public class Chunk
         }
 
         _vertexCount = totalVerts;
-        
-        _visibilityScale = 1f;
 
-        return result;
+        _vb.SetData(result);
     }
 
     private int PosToIndex(Vector3 pos)
