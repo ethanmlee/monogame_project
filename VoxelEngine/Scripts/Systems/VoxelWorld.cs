@@ -22,6 +22,8 @@ public class VoxelWorld
     public readonly EffectParameter ParamViewMatrix;
     public readonly EffectParameter ParamProjectionMatrix;
 
+    public readonly HashSet<ChunkCoord> ValidChunkCoords = new HashSet<ChunkCoord>();
+
     public VoxelWorld(GraphicsDevice graphicsDevice)
     {
         Effect = Game1.ContentManager.Load<Effect>("Shaders/SimpleEffect");
@@ -30,11 +32,11 @@ public class VoxelWorld
         ParamProjectionMatrix = Effect.Parameters["_ProjectionMatrix"];
 
         // Populate room map
-        for (var x = 0; x < VoxelData.worldSizeInChunks.X; x++)
+        for (var x = 0; x < VoxelData.WorldSizeChunks.X; x++)
         {
-            for (var y = 0; y < VoxelData.worldSizeInChunks.Y; y++)
+            for (var y = 0; y < VoxelData.WorldSizeChunks.Y; y++)
             {
-                for (var z = 0; z < VoxelData.worldSizeInChunks.Z; z++)
+                for (var z = 0; z < VoxelData.WorldSizeChunks.Z; z++)
                 {
                     ChunkCoord coord = new ChunkCoord(x, y, z);
                     var newChunk = new Chunk(coord, this, graphicsDevice);
@@ -43,11 +45,20 @@ public class VoxelWorld
             }
         }
         
-        GenerateAllChunks();
+        // GenerateAllChunks();
     }
 
-    private async void GenerateAllChunks()
+    public async void GenerateAllChunks()
     {
+        ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
+        ValidChunkCoords.Clear();
+        for (int x = -VoxelData.RenderDistance; x <= VoxelData.RenderDistance; x++)
+        for (int y = -VoxelData.RenderDistance; y <= VoxelData.RenderDistance; y++)
+        for (int z = -VoxelData.RenderDistance; z <= VoxelData.RenderDistance; z++)
+        {
+            ValidChunkCoords.Add(new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z));
+        }
+
         await Task.WhenAll(Chunks.Values.Select((chunk => chunk.GenerateVoxelMap())));
 
         await Task.WhenAll(Chunks.Values.Select((chunk => chunk.CreateMesh())));

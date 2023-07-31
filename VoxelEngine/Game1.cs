@@ -26,9 +26,9 @@ namespace VoxelEngine
 
         public static Tweener Tweener = new Tweener();
 
-        public static Vector3 CamPos = new Vector3((VoxelData.worldSizeInChunks.X * VoxelData.chunkSize.X) / 2f,
-            VoxelData.worldSizeInChunks.Y * VoxelData.chunkSize.Y + 2,
-            (VoxelData.worldSizeInChunks.Z * VoxelData.chunkSize.Z) / 2f);
+        public static Vector3 CamPos = new Vector3((VoxelData.WorldSizeChunks.X * VoxelData.chunkSize.X) / 2f,
+            VoxelData.WorldSizeChunks.Y * VoxelData.chunkSize.Y + 2,
+            (VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z) / 2f);
         public static Vector3 CamEulerAngles = new Vector3(0, 0, 0);
 
         private Point _startMousePoint => new Point(Window.ClientBounds.Size.X / 2, Window.ClientBounds.Size.Y / 2);
@@ -91,15 +91,7 @@ namespace VoxelEngine
             if (keyboardState.WasKeyJustDown(Keys.F3)) ShowDebugOverlay = !ShowDebugOverlay;
             if (keyboardState.WasKeyJustDown(Keys.G))
             {
-                foreach (Chunk chunk in VoxelWorld.Chunks.Values)
-                {
-                    Task.Factory.StartNew((() =>
-                    {
-                        chunk.CreateMesh();
-                        // Game1.Tweener.TweenTo(chunk, expression: chunk => chunk._visibilityScale, toValue: 1f, 0.5f)
-                        //     .Easing(EasingFunctions.SineOut);
-                    }));
-                }
+                VoxelWorld.GenerateAllChunks();
             }
 
             // Rotation
@@ -180,7 +172,7 @@ namespace VoxelEngine
             ImGui.EndMainMenuBar();
 
             ImGui.Begin("Stats");
-                ImGui.Text("Mem: " + GC.GetTotalMemory(true).ToString());
+                ImGui.Text("Mem: " + (GC.GetTotalMemory(true) / 1000000));
                 ImGui.Text("FPS: " + 1000f / gameTime.ElapsedGameTime.TotalMilliseconds);
             ImGui.End();
             

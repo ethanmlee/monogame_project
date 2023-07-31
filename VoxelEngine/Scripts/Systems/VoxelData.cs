@@ -10,7 +10,10 @@ public static class VoxelData
 
     public static readonly Vector3Int chunkSize = new Vector3Int(16, 16, 16); // Chunk size x and z must stay equal for rotation of rooms to work properly!!!
     public static int ChunkSizeTotal => chunkSize.X * chunkSize.Y * chunkSize.Z;
-    public static readonly Vector3Int worldSizeInChunks = new Vector3Int(32,3,32);
+    public const int WorldPlanarSizeChunks = 64;
+    public const int WorldHeightChunks = 8;
+    public static readonly Vector3Int WorldSizeChunks = new Vector3Int(WorldPlanarSizeChunks,WorldHeightChunks,WorldPlanarSizeChunks);
+    public static int RenderDistance = 12;
 
     public static readonly float lightFalloff = 0.075f;
 
@@ -24,7 +27,7 @@ public static class VoxelData
 
     public static Vector3Int WorldSizeInVoxels
     {
-        get { return (chunkSize * worldSizeInChunks); }
+        get { return (chunkSize * WorldSizeChunks); }
     }
 
     public static readonly int textureAtlasSizeInBlocks = 16; 

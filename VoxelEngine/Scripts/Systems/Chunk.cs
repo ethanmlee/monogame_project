@@ -32,6 +32,7 @@ public class Chunk
     private readonly GraphicsDevice _graphicsDevice;
 
     private bool _isDirty = false;
+    private bool _hasVisibleFace = false;
     
     private static readonly SimplexPerlin Perlin = new SimplexPerlin(1337, NoiseQuality.Best);
 
@@ -54,9 +55,6 @@ public class Chunk
             _ib = new IndexBuffer(_graphicsDevice, typeof(int), _triangles.Length, BufferUsage.WriteOnly);
             _ib.SetData(_triangles);
         }
-        _vb = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration, VoxelData.ChunkSizeTotal * 24,
-            BufferUsage.None);
-        _binding = new VertexBufferBinding(_vb);
 
         _position = Coord.Vector * VoxelData.chunkSize;
     }
@@ -74,7 +72,7 @@ public class Chunk
         if (_binding.VertexBuffer == null) return;
         if (_ib == null) return;
 
-        var loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.worldSizeInChunks)) * (VoxelData.chunkSize * VoxelData.worldSizeInChunks);
+        var loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.WorldSizeChunks)) * (VoxelData.chunkSize * VoxelData.WorldSizeChunks);
         loopOffset.Y = 0;
         Vector3 newPos = _position + loopOffset;
         var bounding = new BoundingBox(newPos, newPos + VoxelData.chunkSize);
@@ -186,9 +184,14 @@ public class Chunk
 
     private void UpdateBlocks()
     {
+        if (!_world.ValidChunkCoords.Contains(Coord)) return;
+        if (MathF.Abs(_position.X - Game1.CamPos.X) > VoxelData.RenderDistance * VoxelData.chunkSize.X) return;
+        if (MathF.Abs(_position.Z - Game1.CamPos.Z) > VoxelData.RenderDistance * VoxelData.chunkSize.Z) return;
+
         var result = new VertexPositionColor[VoxelData.ChunkSizeTotal * 24];
         int vertStride = 6 * 4;
         int totalVerts = 0;
+        _hasVisibleFace = false;
 
         var random = new Random(Coord.X * Coord.Y * Coord.Z);
 
@@ -244,10 +247,26 @@ public class Chunk
                     thisVertexCount++;
                     totalVerts++;
                 }
+                
+                _hasVisibleFace = true;
             }
         }
 
         _vertexCount = totalVerts;
+
+        if (totalVerts < 3 || !_hasVisibleFace)
+        {
+            if (_vb is { IsDisposed: false }) _vb.Dispose();
+            return;
+        }
+
+        if (_vb == null || _vb.IsDisposed)
+        {
+            _vb = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration,
+                VoxelData.ChunkSizeTotal * 24,
+                BufferUsage.None);
+            _binding = new VertexBufferBinding(_vb);
+        }
 
         _vb.SetData(result);
     }
