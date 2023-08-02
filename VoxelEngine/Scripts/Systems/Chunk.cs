@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using ImageTools.Core;
 using LibNoise;
 using LibNoise.Primitive;
 using Microsoft.Xna.Framework;
@@ -35,6 +36,7 @@ public class Chunk
     private bool _hasVisibleFace = false;
     
     private static readonly SimplexPerlin Perlin = new SimplexPerlin(1337, NoiseQuality.Best);
+    private static readonly PerlinNoise Perlin2 = new PerlinNoise(1337, 128);
 
     public Chunk(ChunkCoord coord, VoxelWorld world, GraphicsDevice graphicsDevice)
     {
@@ -99,10 +101,28 @@ public class Chunk
                 var voxelPos = IndexToVector(i);
                 Vector3 worldPos = (voxelPos + _position);
                 VoxelMap[i] = new VoxelState(0);
-                // var ySimplex = (simplex.GetData(worldPos.X, worldPos.Z, 0.5f)) * 8f + 30;
-                if (worldPos.Y <= Perlin.GetValue(worldPos.X * 0.01f, 30, worldPos.Z * 0.01f) * 8f + 30)
+
+                var ySimplex = Perlin.GetValue(worldPos.X, worldPos.Z) * 8f + 30;
+                var yPerlin = Perlin2.Noise(worldPos.X, 30, worldPos.Z, 0.025) * 8f + 30;
+
+                float s = worldPos.X / (VoxelData.WorldSizeChunks.X * VoxelData.chunkSize.X);
+                float t = worldPos.Z / (VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z);
+                    
+                float x1 = 0, x2 = VoxelData.WorldPlanarSizeChunks / 2f;
+                float y1 = 0, y2 = VoxelData.WorldPlanarSizeChunks / 2f;
+                float dx = x2 - x1;
+                float dy = y2 - y1;
+
+                float nx = x1 + MathF.Cos(s * 2 * MathF.PI) * dx / (2 * MathF.PI);
+                float ny = y1 + MathF.Cos(t * 2 * MathF.PI) * dy / (2 * MathF.PI);
+                float nz = x1 + MathF.Sin(s * 2 * MathF.PI) * dx / (2 * MathF.PI);
+                float nw = y1 + MathF.Sin(t * 2 * MathF.PI) * dy / (2 * MathF.PI);
+                    
+                ySimplex = Perlin.GetValue(nx, ny, nz, nw) * 8 + 30;
+
+                if (worldPos.Y <= ySimplex)
                 {
-                    VoxelMap[i] = new VoxelState()
+                    VoxelMap[i] = new VoxelState
                     {
                         Index = (byte)Randomizer.Range(1, 4)
                     };
