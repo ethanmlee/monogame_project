@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
@@ -164,6 +165,16 @@ public class VoxelWorld
         int y = (pos.Y / VoxelData.chunkSize.Y).FloorToInt();
         int z = (pos.Z / VoxelData.chunkSize.Z).FloorToInt();
         return Chunks[new ChunkCoord(pos)] as Chunk;
+    }
+
+    public Chunk? TryGetChunk(ChunkCoord chunkCoord)
+    {
+        if (Chunks.TryGetValue(chunkCoord, out var gotChunk))
+        {
+            return gotChunk;
+        }
+
+        return null;
     }
 
     public Chunk GetChunk(ChunkCoord chunkCoord)

@@ -41,8 +41,6 @@ public class Chunk
 
     public float _appearScale = 0.001f;
     private Tween _appearTween;
-    
-    private static readonly SimplexPerlin Perlin = new SimplexPerlin(1337, NoiseQuality.Best);
 
     public Chunk(ChunkCoord coord, VoxelWorld world, GraphicsDevice graphicsDevice)
     {
@@ -122,22 +120,10 @@ public class Chunk
                 var voxelPos = IndexToVector(i);
                 Vector3 worldPos = (voxelPos + _position);
                 VoxelMap[i] = new VoxelState(0);
-
-                float s = worldPos.X / (VoxelData.WorldSizeChunks.X * VoxelData.chunkSize.X);
-                float t = worldPos.Z / (VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z);
-                    
-                float x1 = 0, x2 = VoxelData.WorldPlanarSizeChunks / 2f;
-                float y1 = 0, y2 = VoxelData.WorldPlanarSizeChunks / 2f;
-                float dx = x2 - x1;
-                float dy = y2 - y1;
-
-                float nx = x1 + MathF.Cos(s * 2 * MathF.PI) * dx / (2 * MathF.PI);
-                float ny = y1 + MathF.Cos(t * 2 * MathF.PI) * dy / (2 * MathF.PI);
-                float nz = x1 + MathF.Sin(s * 2 * MathF.PI) * dx / (2 * MathF.PI);
-                float nw = y1 + MathF.Sin(t * 2 * MathF.PI) * dy / (2 * MathF.PI);
-                    
-                var yPerlin = Perlin.GetValue(nx, ny, nz, nw) * 8 + 30;
-
+                float yPerlin = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.5f) * 8 + 30;
+                float yPerlin2 = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.2f) * 30 + 30;
+                yPerlin = (yPerlin + yPerlin2) / 2f;
+                yPerlin += TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 2f);
                 if (worldPos.Y <= yPerlin)
                 {
                     VoxelMap[i] = new VoxelState
@@ -198,8 +184,9 @@ public class Chunk
         if (!isThere)
         {
             var targetChunkCoord = _world.GetChunkCoord(pos + _position);
-            if (!_world.IsChunkInWorld(targetChunkCoord)) return oobOccupied;
-            Chunk targetChunk = _world.GetChunk(targetChunkCoord);
+            Chunk targetChunk = _world.TryGetChunk(targetChunkCoord);
+            if (targetChunk == null) return oobOccupied;
+            
             Vector3Int targetPos = pos % VoxelData.chunkSize;
             int chunkIndex = (targetChunk.PosToIndex(targetPos));
             return targetChunk.VoxelMap[chunkIndex].Index > 0;
