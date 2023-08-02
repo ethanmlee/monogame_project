@@ -22,7 +22,9 @@ public class VoxelWorld
     public readonly EffectParameter ParamViewMatrix;
     public readonly EffectParameter ParamProjectionMatrix;
 
-    public readonly HashSet<ChunkCoord> ValidChunkCoords = new HashSet<ChunkCoord>();
+    public HashSet<ChunkCoord> ValidChunkCoords = new HashSet<ChunkCoord>();
+
+    private CancellationToken _worldGenCancellationToken;
 
     public VoxelWorld(GraphicsDevice graphicsDevice)
     {
@@ -44,24 +46,67 @@ public class VoxelWorld
                 }
             }
         }
-        
+
+        Task.Factory.StartNew((async () =>
+        {
+            while (!_worldGenCancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(1000);
+                await GenerateValidChunks();
+            }
+
+            return Task.CompletedTask;
+        }));
+
         // GenerateAllChunks();
     }
 
-    public async void GenerateAllChunks()
+    public async Task GenerateAllChunks()
     {
         ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
-        ValidChunkCoords.Clear();
+        var newValidChunks = new HashSet<ChunkCoord>();
         for (int x = -VoxelData.RenderDistance; x <= VoxelData.RenderDistance; x++)
         for (int y = -VoxelData.RenderDistance; y <= VoxelData.RenderDistance; y++)
         for (int z = -VoxelData.RenderDistance; z <= VoxelData.RenderDistance; z++)
         {
-            ValidChunkCoords.Add(new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z));
+            newValidChunks.Add(new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z));
         }
 
+        ValidChunkCoords = newValidChunks;
+        
         await Task.WhenAll(Chunks.Values.Select((chunk => chunk.GenerateVoxelMap())));
 
         await Task.WhenAll(Chunks.Values.Select((chunk => chunk.CreateMesh())));
+    }
+
+    public async Task GenerateValidChunks()
+    {
+        ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
+        var newValidChunks = new HashSet<ChunkCoord>();
+        for (int y = -VoxelData.RenderDistance; y <= VoxelData.RenderDistance; y++)
+        for (int x = -VoxelData.RenderDistance; x <= VoxelData.RenderDistance; x++)
+        for (int z = -VoxelData.RenderDistance; z <= VoxelData.RenderDistance; z++)
+        {
+            var newChunkCoord = new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z);
+            if (!IsChunkInWorld(newChunkCoord)) continue;
+            newValidChunks.Add(new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z));
+        }
+        // Remove chunks
+        var chunksToRemove = ValidChunkCoords.Except(newValidChunks);
+        foreach (var chunkCoord in chunksToRemove)
+        {
+            Chunks[chunkCoord].DisposeMesh();
+        }
+        // Create chunks
+        var chunksToCreate = newValidChunks.Except(ValidChunkCoords).ToArray();
+        var newChunks = Chunks
+            .Where(chunk => chunksToCreate.Contains(chunk.Value.Coord))
+            .OrderBy((coord => (coord.Key.Vector * VoxelData.chunkSize - Game1.CamPos).LengthSquared()))
+            .ToArray();
+        await Task.WhenAll(newChunks.Select((chunk => chunk.Value.GenerateVoxelMap())));
+        await Task.WhenAll(newChunks.Select((chunk => chunk.Value.CreateMesh())));
+        
+        ValidChunkCoords = newValidChunks;
     }
 
     public void Update()
@@ -144,7 +189,7 @@ public class VoxelWorld
 
     public bool IsChunkInWorld(ChunkCoord chunkCoord)
     {
-        return Chunks.TryGetValue(chunkCoord, out var _);
+        return Chunks.ContainsKey(chunkCoord);
     }
 
     public bool IsChunkInWorld(Vector3 chunkCoordVector3)

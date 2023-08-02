@@ -89,10 +89,6 @@ namespace VoxelEngine
             IsMouseVisible = !IsActive || ShowDebugOverlay;
 
             if (keyboardState.WasKeyJustDown(Keys.F3)) ShowDebugOverlay = !ShowDebugOverlay;
-            if (keyboardState.WasKeyJustDown(Keys.G))
-            {
-                VoxelWorld.GenerateAllChunks();
-            }
 
             // Rotation
             var mouseDelta = mouseState.Position - _startMousePoint;

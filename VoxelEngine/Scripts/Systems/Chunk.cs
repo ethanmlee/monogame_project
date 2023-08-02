@@ -4,6 +4,7 @@ using LibNoise;
 using LibNoise.Primitive;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended.Tweening;
 
 namespace VoxelEngine.Scripts.Systems;
 
@@ -15,6 +16,9 @@ public class Chunk
     public ChunkCoord Coord;
     public readonly VoxelState[] VoxelMap =
         new VoxelState[VoxelData.chunkSize.X * VoxelData.chunkSize.Y * VoxelData.chunkSize.Z];
+
+    public bool IsGenerated { get; private set; } = false;
+    public bool HasMesh { get; private set; } = false;
     
     private VertexBufferBinding _binding;
     private static IndexBuffer _ib;
@@ -34,9 +38,11 @@ public class Chunk
 
     private bool _isDirty = false;
     private bool _hasVisibleFace = false;
+
+    public float _appearScale = 0.001f;
+    private Tween _appearTween;
     
     private static readonly SimplexPerlin Perlin = new SimplexPerlin(1337, NoiseQuality.Best);
-    private static readonly PerlinNoise Perlin2 = new PerlinNoise(1337, 128);
 
     public Chunk(ChunkCoord coord, VoxelWorld world, GraphicsDevice graphicsDevice)
     {
@@ -63,6 +69,12 @@ public class Chunk
     
     public void Update()
     {
+        if (_appearScale < 0.9f && HasMesh && _appearTween is not {IsAlive: true})
+        {
+            _appearTween = Game1.Tweener.TweenTo(this, chunk => chunk._appearScale, 1f, 0.25f, 0f)
+                .Easing(EasingFunctions.CubicOut);
+        }
+        
         if (!_isDirty) return;
         _isDirty = false;
         Task.Factory.StartNew(CreateMesh);
@@ -73,6 +85,7 @@ public class Chunk
         if (_vertexCount <= 0) return;
         if (_binding.VertexBuffer == null) return;
         if (_ib == null) return;
+        if (!HasMesh) return;
 
         var loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.WorldSizeChunks)) * (VoxelData.chunkSize * VoxelData.WorldSizeChunks);
         loopOffset.Y = 0;
@@ -82,28 +95,33 @@ public class Chunk
 
         _graphicsDevice.SetVertexBuffers(_binding);
         _graphicsDevice.Indices = _ib;
-        _world.ParamWorldMatrix.SetValue(Matrix.CreateTranslation(newPos));
+        _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(_appearScale) * Matrix.CreateTranslation(newPos));
         VoxelWorld.EffectPass.Apply();
         _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, VoxelData.ChunkSizeTotal * 36);
         _graphicsDevice.SetVertexBuffers(null);
     }
 
+    public void DisposeMesh()
+    {
+        if (_vb is { IsDisposed: false }) _vb.Dispose();
+        _vb = null;
+        _binding = new VertexBufferBinding();
+        _vertexCount = 0;
+        HasMesh = false;
+        _appearScale = 0.001f;
+    }
+
     public Task GenerateVoxelMap()
     {
-        ClearMeshData();
-
-        // var simplex = new SeamlessSimplexNoise(VoxelData.chunkSize.X * VoxelData.worldSizeInChunks.X, 1337);
-
         return Task.Factory.StartNew((() =>
         {
+            if (IsGenerated) return;
+            
             for (var i = 0; i < VoxelMap.Length; i++)
             {
                 var voxelPos = IndexToVector(i);
                 Vector3 worldPos = (voxelPos + _position);
                 VoxelMap[i] = new VoxelState(0);
-
-                var ySimplex = Perlin.GetValue(worldPos.X, worldPos.Z) * 8f + 30;
-                var yPerlin = Perlin2.Noise(worldPos.X, 30, worldPos.Z, 0.025) * 8f + 30;
 
                 float s = worldPos.X / (VoxelData.WorldSizeChunks.X * VoxelData.chunkSize.X);
                 float t = worldPos.Z / (VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z);
@@ -118,9 +136,9 @@ public class Chunk
                 float nz = x1 + MathF.Sin(s * 2 * MathF.PI) * dx / (2 * MathF.PI);
                 float nw = y1 + MathF.Sin(t * 2 * MathF.PI) * dy / (2 * MathF.PI);
                     
-                ySimplex = Perlin.GetValue(nx, ny, nz, nw) * 8 + 30;
+                var yPerlin = Perlin.GetValue(nx, ny, nz, nw) * 8 + 30;
 
-                if (worldPos.Y <= ySimplex)
+                if (worldPos.Y <= yPerlin)
                 {
                     VoxelMap[i] = new VoxelState
                     {
@@ -129,7 +147,7 @@ public class Chunk
                 }
             }
 
-            CreateMeshData();
+            IsGenerated = true;
         }));
     }
 
@@ -144,24 +162,11 @@ public class Chunk
         _isDirty = true;
     }
 
-    public void CreateMeshData()
-    {
-        ClearMeshData();
-    }
-
     public Task CreateMesh()
     {
-        var task = Task.Factory.StartNew(() => UpdateBlocks());
+        var task = Task.Factory.StartNew(UpdateBlocks);
 
         return task;
-    }
-
-    private void ClearMeshData()
-    {
-        // _vertices.Clear();
-        // _triangles.Clear();
-        // _uvs.Clear();
-        // _normals.Clear();
     }
     
     private bool IsVoxelInChunk(int x, int y, int z)
@@ -204,10 +209,6 @@ public class Chunk
 
     private void UpdateBlocks()
     {
-        if (!_world.ValidChunkCoords.Contains(Coord)) return;
-        if (MathF.Abs(_position.X - Game1.CamPos.X) > VoxelData.RenderDistance * VoxelData.chunkSize.X) return;
-        if (MathF.Abs(_position.Z - Game1.CamPos.Z) > VoxelData.RenderDistance * VoxelData.chunkSize.Z) return;
-
         var result = new VertexPositionColor[VoxelData.ChunkSizeTotal * 24];
         int vertStride = 6 * 4;
         int totalVerts = 0;
@@ -276,7 +277,7 @@ public class Chunk
 
         if (totalVerts < 3 || !_hasVisibleFace)
         {
-            if (_vb is { IsDisposed: false }) _vb.Dispose();
+            DisposeMesh();
             return;
         }
 
@@ -289,6 +290,8 @@ public class Chunk
         }
 
         _vb.SetData(result);
+
+        HasMesh = true;
     }
 
     private int PosToIndex(Vector3 pos)
