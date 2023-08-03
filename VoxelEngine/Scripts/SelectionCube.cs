@@ -7,21 +7,23 @@ namespace VoxelEngine.Scripts;
 
 public class SelectionCube
 {
-    public Vector3 Position = Vector3.Zero;
-    private ModelBasic _model;
+    public Vector3 Position { get; set; } = Vector3.Zero;
+    public bool IsVisible { get; set; } = false;
+    private ModelBasic Model { get; set; }
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager contentManager)
     {
-        _model = new ModelBasic(graphicsDevice, contentManager, "Graphics/Fbx_SelectionCube", diffuseColor: Color.White);
+        Model = new ModelBasic(graphicsDevice, contentManager, "Graphics/Fbx_SelectionCube", diffuseColor: Color.White);
     }
 
     public void Update(GameTime gameTime)
     {
-        _model.WorldMatrix = Matrix.CreateScale(1.1f) * Matrix.CreateTranslation(Position);
+        Model.WorldMatrix = Matrix.CreateScale(1.1f) * Matrix.CreateTranslation(Position);
     }
 
     public void Draw()
     {
-        _model.Draw(Game1.ViewMatrix, Game1.ProjectionMatrix);
+        if (!IsVisible) return;
+        Model.Draw(Game1.ViewMatrix, Game1.ProjectionMatrix);
     }
 }

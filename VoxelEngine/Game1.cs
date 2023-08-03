@@ -30,6 +30,7 @@ namespace VoxelEngine
             VoxelData.WorldSizeChunks.Y * VoxelData.chunkSize.Y + 2,
             (VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z) / 2f);
         public static Vector3 CamEulerAngles = new Vector3(0, 0, 0);
+        public static Matrix CamRotationMatrix = Matrix.Identity;
 
         private Point _startMousePoint => new Point(Window.ClientBounds.Size.X / 2, Window.ClientBounds.Size.Y / 2);
 
@@ -39,6 +40,7 @@ namespace VoxelEngine
 
         private SelectionCube _selectionCube = new SelectionCube();
         private SkySphere _skySphere = new SkySphere();
+        private OrientationArrows _orientationArrows;
 
         public ImGuiRenderer ImGuiRenderer;
 
@@ -78,6 +80,7 @@ namespace VoxelEngine
 
             _selectionCube.LoadContent(GraphicsDevice, ContentManager);
             _skySphere.LoadContent(ContentManager);
+            _orientationArrows = new OrientationArrows(GraphicsDevice);
 
             VoxelWorld = new VoxelWorld(GraphicsDevice);
         }
@@ -98,30 +101,33 @@ namespace VoxelEngine
                 CamEulerAngles.X += -mouseDelta.Y * 0.001f;
                 CamEulerAngles.Y += -mouseDelta.X * 0.001f;
             }
-            Matrix rotationMatrix = Matrix.CreateRotationX(CamEulerAngles.X) * Matrix.CreateRotationY(CamEulerAngles.Y);
+            CamRotationMatrix = Matrix.CreateRotationX(CamEulerAngles.X) * Matrix.CreateRotationY(CamEulerAngles.Y);
             if (!IsMouseVisible) MouseExtended.SetPosition(_startMousePoint);
 
             // Flying Position
             var moveInput = new Vector3((keyboardState.IsKeyDown(Keys.D) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.A) ? 1 : 0), (keyboardState.IsKeyDown(Keys.Space) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.LeftShift) ? 1 : 0), (keyboardState.IsKeyDown(Keys.W) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.S) ? 1 : 0));
-            Vector3 movementRelative = rotationMatrix.Forward * moveInput.Z + rotationMatrix.Right * moveInput.X + rotationMatrix.Up * moveInput.Y;
+            Vector3 movementRelative = CamRotationMatrix.Forward * moveInput.Z + CamRotationMatrix.Right * moveInput.X + CamRotationMatrix.Up * moveInput.Y;
             if (movementRelative.Length() > 0) movementRelative = Vector3.Normalize(movementRelative) * movementRelative.Length();
-            CamPos += movementRelative * (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
+            CamPos += movementRelative * (float)gameTime.ElapsedGameTime.TotalSeconds * 50;
             
-            ViewMatrix = Matrix.CreateLookAt(CamPos, CamPos + Vector3.Transform(Vector3.Forward, rotationMatrix), Vector3.Up);
+            ViewMatrix = Matrix.CreateLookAt(CamPos, CamPos + Vector3.Transform(Vector3.Forward, CamRotationMatrix), Vector3.Up);
 
             BoundingFrustum.Matrix = ViewMatrix * ProjectionMatrix;
 
-            Vector3 voxelAddPos = Vector3.Round(CamPos + rotationMatrix.Forward * 6 - Vector3.One / 2) + Vector3.One / 2;
-            if (mouseState.WasButtonJustDown(MouseButton.Right))
+            _selectionCube.IsVisible = false;
+            VoxelWorld.PerformRaycast(CamPos, CamRotationMatrix.Forward, 10, ( blockPos,  blockId,  faceDir) =>
             {
-                VoxelWorld.SetVoxel(voxelAddPos, 1);
-            }
-            if (mouseState.WasButtonJustDown(MouseButton.Left))
-            {
-                VoxelWorld.SetVoxel(voxelAddPos, 0);
-            }
-            _selectionCube.Position = Vector3.Lerp(_selectionCube.Position, voxelAddPos,
-                25f * (float)gameTime.ElapsedGameTime.TotalSeconds);
+                _selectionCube.IsVisible = true;
+                _selectionCube.Position = new Vector3(blockPos.X, blockPos.Y, blockPos.Z) + Vector3.One * 0.5f;
+                if (mouseState.WasButtonJustDown(MouseButton.Right))
+                {
+                    VoxelWorld.SetVoxel(blockPos + faceDir, 1);
+                }
+                if (mouseState.WasButtonJustDown(MouseButton.Left))
+                {
+                    VoxelWorld.SetVoxel(blockPos, 0);
+                }
+            });
             _selectionCube.Update(gameTime);
             
             VoxelWorld.Update();
@@ -136,17 +142,14 @@ namespace VoxelEngine
             
             _spriteBatch.Begin(blendState: BlendState.Opaque);
             // Set the desired winding order to clockwise
-            RasterizerState rasterizerStateCw = new RasterizerState
-            {
-                CullMode = CullMode.CullClockwiseFace
-            };
-            GraphicsDevice.RasterizerState = rasterizerStateCw;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
             GraphicsDevice.Clear(Color.Black);
             _skySphere.Draw(GraphicsDevice);
             VoxelWorld.Draw(GraphicsDevice);
             _selectionCube.Draw();
+            
+            _orientationArrows.Draw();
 
             if (ShowDebugOverlay)
             {

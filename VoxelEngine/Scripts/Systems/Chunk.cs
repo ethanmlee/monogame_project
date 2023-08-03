@@ -69,8 +69,9 @@ public class Chunk
     {
         if (_appearScale < 0.9f && HasMesh && _appearTween is not {IsAlive: true})
         {
-            _appearTween = Game1.Tweener.TweenTo(this, chunk => chunk._appearScale, 1f, 0.25f, 0f)
-                .Easing(EasingFunctions.CubicOut);
+            // _appearTween = Game1.Tweener.TweenTo(this, chunk => chunk._appearScale, 1f, 0.25f, 0f)
+            //     .Easing(EasingFunctions.CubicOut);
+            _appearScale = 1f;
         }
         
         if (!_isDirty) return;
@@ -120,8 +121,8 @@ public class Chunk
                 var voxelPos = IndexToVector(i);
                 Vector3 worldPos = (voxelPos + _position);
                 VoxelMap[i] = new VoxelState(0);
-                float yPerlin = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.5f) * 8 + 30;
-                float yPerlin2 = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.2f) * 30 + 30;
+                float yPerlin = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.5f) * 8 + 50;
+                float yPerlin2 = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.2f) * 30 + 50;
                 yPerlin = (yPerlin + yPerlin2) / 2f;
                 yPerlin += TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 2f);
                 if (worldPos.Y <= yPerlin)
@@ -135,6 +136,11 @@ public class Chunk
 
             IsGenerated = true;
         }));
+    }
+
+    public byte GetVoxel(Vector3 pos)
+    {
+        return VoxelMap[PosToIndex(pos)].Index;
     }
 
     public void SetVoxel(Vector3 pos, byte index)
@@ -184,9 +190,8 @@ public class Chunk
         if (!isThere)
         {
             var targetChunkCoord = _world.GetChunkCoord(pos + _position);
-            Chunk targetChunk = _world.TryGetChunk(targetChunkCoord);
-            if (targetChunk == null) return oobOccupied;
-            
+            if (!_world.TryGetChunk(targetChunkCoord, out var targetChunk)) return oobOccupied;
+
             Vector3Int targetPos = pos % VoxelData.chunkSize;
             int chunkIndex = (targetChunk.PosToIndex(targetPos));
             return targetChunk.VoxelMap[chunkIndex].Index > 0;
@@ -262,12 +267,14 @@ public class Chunk
 
         _vertexCount = totalVerts;
 
+        // Dispose of the mesh if it's basically empty
         if (totalVerts < 3 || !_hasVisibleFace)
         {
             DisposeMesh();
             return;
         }
 
+        // If there is no VB or it's been disposed already, make a new one and bind to it
         if (_vb == null || _vb.IsDisposed)
         {
             _vb = new VertexBuffer(_graphicsDevice, VertexPositionColor.VertexDeclaration,
@@ -277,7 +284,6 @@ public class Chunk
         }
 
         _vb.SetData(result);
-
         HasMesh = true;
     }
 

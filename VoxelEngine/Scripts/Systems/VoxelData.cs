@@ -11,7 +11,7 @@ public static class VoxelData
     public static readonly Vector3Int chunkSize = new Vector3Int(16, 16, 16); // Chunk size x and z must stay equal for rotation of rooms to work properly!!!
     public static int ChunkSizeTotal => chunkSize.X * chunkSize.Y * chunkSize.Z;
     public const int WorldPlanarSizeChunks = 64;
-    public const int WorldHeightChunks = 3;
+    public const int WorldHeightChunks = 6;
     public static readonly Vector3Int WorldSizeChunks = new Vector3Int(WorldPlanarSizeChunks,WorldHeightChunks,WorldPlanarSizeChunks);
     public static int RenderDistance = 16;
 
@@ -63,18 +63,20 @@ public static class VoxelData
     };
 
     // Triangle data that makes up the faces
+    // Triangle data that makes up the faces with reversed winding order
     public static readonly int[,] voxelTris = new int[6, 4]
     {
         // Back, Front, Top, Bottom, Left, Right
 
         // Pattern: 0 1 2 2 1 3
-        {0, 3, 1, 2 },    // Back Face
-        {5, 6, 4, 7 },    // Front Face
-        {3, 7, 2, 6 },    // Top Face
-        {1, 5, 0, 4 },    // Bottom Face
-        {4, 7, 0, 3 },    // Left Face
-        {1, 2, 5, 6 }     // Right Face
+        { 1, 2, 0, 3 },    // Back Face
+        { 4, 7, 5, 6 },    // Front Face
+        { 2, 6, 3, 7 },    // Top Face
+        { 0, 4, 1, 5 },    // Bottom Face
+        { 0, 3, 4, 7 },    // Left Face
+        { 5, 6, 1, 2 }     // Right Face
     };
+
 
     // UV data position for each corner of a face
     public static readonly Vector2[] voxelUvs = new Vector2[4]
@@ -89,35 +91,35 @@ public static class VoxelData
 
     public static readonly Vector3[,] voxelAoChecks = new Vector3[24,2]
     {
-        { -Vector3.UnitX, -Vector3.UnitY },
-        { -Vector3.UnitX, Vector3.UnitY },
-        { Vector3.UnitX, -Vector3.UnitY },
-        { Vector3.UnitX, Vector3.UnitY },
-        
         { Vector3.UnitX, -Vector3.UnitY },
         { Vector3.UnitX, Vector3.UnitY },
         { -Vector3.UnitX, -Vector3.UnitY },
         { -Vector3.UnitX, Vector3.UnitY },
-        
+
+        { -Vector3.UnitX, -Vector3.UnitY },
+        { -Vector3.UnitX, Vector3.UnitY },
+        { Vector3.UnitX, -Vector3.UnitY },
+        { Vector3.UnitX, Vector3.UnitY },
+
+        { Vector3.UnitX, -Vector3.UnitZ },
+        { Vector3.UnitX, Vector3.UnitZ },
+        { -Vector3.UnitX, -Vector3.UnitZ },
+        { -Vector3.UnitX, Vector3.UnitZ },
+
         { -Vector3.UnitX, -Vector3.UnitZ },
         { -Vector3.UnitX, Vector3.UnitZ },
         { Vector3.UnitX, -Vector3.UnitZ },
         { Vector3.UnitX, Vector3.UnitZ },
-        
-        { Vector3.UnitX, -Vector3.UnitZ },
-        { Vector3.UnitX, Vector3.UnitZ },
-        { -Vector3.UnitX, -Vector3.UnitZ },
-        { -Vector3.UnitX, Vector3.UnitZ },
-        
-        { Vector3.UnitZ, -Vector3.UnitY },
-        { Vector3.UnitZ, Vector3.UnitY },
-        { -Vector3.UnitZ, -Vector3.UnitY },
-        { -Vector3.UnitZ, Vector3.UnitY },
-        
+
         { -Vector3.UnitZ, -Vector3.UnitY },
         { -Vector3.UnitZ, Vector3.UnitY },
         { Vector3.UnitZ, -Vector3.UnitY },
         { Vector3.UnitZ, Vector3.UnitY },
+
+        { Vector3.UnitZ, -Vector3.UnitY },
+        { Vector3.UnitZ, Vector3.UnitY },
+        { -Vector3.UnitZ, -Vector3.UnitY },
+        { -Vector3.UnitZ, Vector3.UnitY },
     };
 
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
@@ -52,7 +53,7 @@ public class VoxelWorld
         {
             while (!_worldGenCancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(1000);
+                await Task.Delay(10);
                 await GenerateValidChunks();
             }
 
@@ -83,7 +84,7 @@ public class VoxelWorld
     public async Task GenerateValidChunks()
     {
         ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
-        var newValidChunks = new HashSet<ChunkCoord>();
+        var newValidChunks = new HashSet<ChunkCoord>((int)Math.Pow(VoxelData.RenderDistance * 2, 3));
         for (int y = -VoxelData.RenderDistance; y <= VoxelData.RenderDistance; y++)
         for (int x = -VoxelData.RenderDistance; x <= VoxelData.RenderDistance; x++)
         for (int z = -VoxelData.RenderDistance; z <= VoxelData.RenderDistance; z++)
@@ -94,16 +95,27 @@ public class VoxelWorld
         }
         // Remove chunks
         var chunksToRemove = ValidChunkCoords.Except(newValidChunks);
-        foreach (var chunkCoord in chunksToRemove)
+        await Parallel.ForEachAsync(chunksToRemove, _worldGenCancellationToken,  (chunk, ct) =>
         {
-            Chunks[chunkCoord].DisposeMesh();
-        }
+            Chunks[chunk].DisposeMesh();
+            return ValueTask.CompletedTask;
+        });
         // Create chunks
         var chunksToCreate = newValidChunks.Except(ValidChunkCoords).ToArray();
         var newChunks = Chunks
             .Where(chunk => chunksToCreate.Contains(chunk.Value.Coord))
-            .OrderBy((coord => (coord.Key.Vector * VoxelData.chunkSize - Game1.CamPos).LengthSquared()))
+            .OrderBy((coord => ((coord.Key.Vector * VoxelData.chunkSize) - Game1.CamPos).Length()))
             .ToArray();
+        // await Parallel.ForEachAsync(newChunks, _worldGenCancellationToken,  (chunk, ct) =>
+        // {
+        //     chunk.Value.GenerateVoxelMap().WaitAsync(ct);
+        //     return ValueTask.CompletedTask;
+        // });
+        // await Parallel.ForEachAsync(newChunks, _worldGenCancellationToken,  (chunk, ct) =>
+        // {
+        //     chunk.Value.CreateMesh().WaitAsync(ct);
+        //     return ValueTask.CompletedTask;
+        // });
         await Task.WhenAll(newChunks.Select((chunk => chunk.Value.GenerateVoxelMap())));
         await Task.WhenAll(newChunks.Select((chunk => chunk.Value.CreateMesh())));
         
@@ -153,6 +165,16 @@ public class VoxelWorld
             RefreshChunk(new ChunkCoord(coord.X, coord.Y, coord.Z + 1));
     }
 
+    public byte GetVoxel(Vector3 worldPos)
+    {
+        ChunkCoord coord = GetChunkCoord(worldPos);
+        if (!IsChunkInWorld(coord)) return 0;
+        
+        Chunk chunk = GetChunk(coord);
+        Vector3Int posInChunk = new Vector3Int(worldPos) % VoxelData.chunkSize;
+        return chunk.GetVoxel(posInChunk);
+    }
+
     public void RefreshChunk(ChunkCoord coord)
     {
         if (!IsChunkInWorld(coord)) return;
@@ -167,14 +189,16 @@ public class VoxelWorld
         return Chunks[new ChunkCoord(pos)] as Chunk;
     }
 
-    public Chunk? TryGetChunk(ChunkCoord chunkCoord)
+    public bool TryGetChunk(ChunkCoord chunkCoord, [MaybeNullWhen(false)] out Chunk chunk)
     {
         if (Chunks.TryGetValue(chunkCoord, out var gotChunk))
         {
-            return gotChunk;
+            chunk = gotChunk;
+            return true;
         }
 
-        return null;
+        chunk = null;
+        return false;
     }
 
     public Chunk GetChunk(ChunkCoord chunkCoord)
@@ -200,11 +224,120 @@ public class VoxelWorld
 
     public bool IsChunkInWorld(ChunkCoord chunkCoord)
     {
-        return Chunks.ContainsKey(chunkCoord);
+        return (chunkCoord.X >= 0 && chunkCoord.X < VoxelData.WorldSizeChunks.X) &&
+               (chunkCoord.Y >= 0 && chunkCoord.Y < VoxelData.WorldSizeChunks.Y) &&
+               (chunkCoord.Z >= 0 && chunkCoord.Z < VoxelData.WorldSizeChunks.Z);
     }
 
     public bool IsChunkInWorld(Vector3 chunkCoordVector3)
     {
         return IsChunkInWorld(new ChunkCoord(chunkCoordVector3));
     }
+    
+    public void PerformRaycast(Vector3 origin, Vector3 direction, double radius, Action<Vector3Int, byte, Vector3> callback)
+    {
+        int x = (int)Math.Floor(origin.X);
+        int y = (int)Math.Floor(origin.Y);
+        int z = (int)Math.Floor(origin.Z);
+
+        double dx = direction.X;
+        double dy = direction.Y;
+        double dz = direction.Z;
+
+        int stepX = Signum(dx);
+        int stepY = Signum(dy);
+        int stepZ = Signum(dz);
+
+        double tMaxX = Intbound(origin.X, dx);
+        double tMaxY = Intbound(origin.Y, dy);
+        double tMaxZ = Intbound(origin.Z, dz);
+
+        double tDeltaX = stepX / dx;
+        double tDeltaY = stepY / dy;
+        double tDeltaZ = stepZ / dz;
+
+        Vector3 face = new Vector3();
+
+        if (dx == 0 && dy == 0 && dz == 0)
+            throw new ArgumentOutOfRangeException("Raycast in zero direction!");
+
+        radius /= Math.Sqrt(dx*dx + dy*dy + dz*dz);
+
+        var worldSizeX = VoxelData.WorldSizeChunks.X * VoxelData.chunkSize.X;
+        var worldSizeY = VoxelData.WorldSizeChunks.Y * VoxelData.chunkSize.Y;
+        var worldSizeZ = VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z;
+        while ((stepX > 0 ? x < worldSizeX : x >= 0) &&
+               (stepY > 0 ? y < worldSizeY : y >= 0) &&
+               (stepZ > 0 ? z < worldSizeZ : z >= 0))
+        {
+            if (x < 0 || y < 0 || z < 0 || x >= worldSizeX || y >= worldSizeY || z >= worldSizeZ)
+                break;
+
+            byte voxelId = GetVoxel(new Vector3(x, y, z));
+            if (voxelId != 0)
+            {
+                callback.Invoke(new Vector3Int(x, y, z), voxelId, face);
+                break;
+            }
+
+            if (tMaxX < tMaxY)
+            {
+                if (tMaxX < tMaxZ)
+                {
+                    if (tMaxX > radius) break;
+                    x += stepX;
+                    tMaxX += tDeltaX;
+                    face = new Vector3(-stepX, 0, 0);
+                }
+                else
+                {
+                    if (tMaxZ > radius) break;
+                    z += stepZ;
+                    tMaxZ += tDeltaZ;
+                    face = new Vector3(0, 0, -stepZ);
+                }
+            }
+            else
+            {
+                if (tMaxY < tMaxZ)
+                {
+                    if (tMaxY > radius) break;
+                    y += stepY;
+                    tMaxY += tDeltaY;
+                    face = new Vector3(0, -stepY, 0);
+                }
+                else
+                {
+                    if (tMaxZ > radius) break;
+                    z += stepZ;
+                    tMaxZ += tDeltaZ;
+                    face = new Vector3(0, 0, -stepZ);
+                }
+            }
+        }
+    }
+
+    private double Intbound(double s, double ds)
+    {
+        if (ds < 0)
+        {
+            return Intbound(-s, -ds);
+        }
+        else
+        {
+            s = Mod(s, 1);
+            return (1 - s) / ds;
+        }
+    }
+
+    private int Signum(double x)
+    {
+        return x > 0 ? 1 : x < 0 ? -1 : 0;
+    }
+
+    private double Mod(double value, double modulus)
+    {
+        return (value % modulus + modulus) % modulus;
+    }
+
 }
