@@ -94,7 +94,7 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _bgBathroomTex = ContentManager.Load<Texture2D>("Textures/BG_Bathroom");
-        _bgTex = ContentManager.Load<Texture2D>("Textures/BG_Dots");
+        _bgTex = ContentManager.Load<Texture2D>("Textures/Bg_Dots");
         _borderMockupTex = ContentManager.Load<Texture2D>("Textures/BorderMockup_DS");
         PlayerPaddle1.LoadContent();
         PlayerPaddle2.LoadContent();
