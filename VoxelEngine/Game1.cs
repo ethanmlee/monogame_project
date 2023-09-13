@@ -92,7 +92,7 @@ namespace VoxelEngine
             IsMouseVisible = !IsActive || ShowDebugOverlay;
 
             if (keyboardState.WasKeyJustDown(Keys.F3)) ShowDebugOverlay = !ShowDebugOverlay;
-
+            
             // Rotation
             var mouseDelta = mouseState.Position - _startMousePoint;
             if (IsMouseVisible) mouseDelta = Point.Zero;
@@ -102,7 +102,8 @@ namespace VoxelEngine
                 CamEulerAngles.Y += -mouseDelta.X * 0.001f;
             }
             CamRotationMatrix = Matrix.CreateRotationX(CamEulerAngles.X) * Matrix.CreateRotationY(CamEulerAngles.Y);
-            if (!IsMouseVisible) MouseExtended.SetPosition(_startMousePoint);
+            if (!IsMouseVisible) Mouse.SetPosition(_startMousePoint.X, _startMousePoint.Y);
+            // if (!IsMouseVisible) MouseExtended.SetPosition(_startMousePoint);
 
             // Flying Position
             var moveInput = new Vector3((keyboardState.IsKeyDown(Keys.D) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.A) ? 1 : 0), (keyboardState.IsKeyDown(Keys.Space) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.LeftShift) ? 1 : 0), (keyboardState.IsKeyDown(Keys.W) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.S) ? 1 : 0));

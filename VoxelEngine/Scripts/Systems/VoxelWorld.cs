@@ -91,7 +91,7 @@ public class VoxelWorld
         {
             var newChunkCoord = new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z);
             if (!IsChunkInWorld(newChunkCoord)) continue;
-            newValidChunks.Add(new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z));
+            newValidChunks.Add(newChunkCoord);
         }
         // Remove chunks
         var chunksToRemove = ValidChunkCoords.Except(newValidChunks);
