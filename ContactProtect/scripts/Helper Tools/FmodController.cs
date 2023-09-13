@@ -56,8 +56,8 @@ public static class FmodController
 
     public static void LoadContent()
     {
-        _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.bank");
-        _masterBank = StudioSystem.LoadBank("ContactProtectFMOD/Build/Desktop/Master.strings.bank");
+        _masterBank = StudioSystem.LoadBank("ContactProtectFmod/Build/Desktop/Master.bank");
+        _masterBank = StudioSystem.LoadBank("ContactProtectFmod/Build/Desktop/Master.strings.bank");
         _masterBank.LoadSampleData();
         
         // Loading busses must be after loading banks, for some reason
