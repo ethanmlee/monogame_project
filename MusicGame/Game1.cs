@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.IO;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -9,25 +10,29 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
+    public static Texture2D Pixel;
+    public Platform Platform;
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        _graphics.PreferredBackBufferWidth = 1920;
+        _graphics.PreferredBackBufferHeight = 1080;
+        _graphics.ApplyChanges();
     }
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
-
         base.Initialize();
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        // TODO: use this.Content to load your game content here
+        Pixel = LoadFromFile("Content/Pixel.png");
+        Platform = new Platform(Vector2.One * 30, 0f, 50f);
     }
 
     protected override void Update(GameTime gameTime)
@@ -36,7 +41,8 @@ public class Game1 : Game
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
-        // TODO: Add your update logic here
+        Platform.Thickness = 5f;
+
 
         base.Update(gameTime);
     }
@@ -45,8 +51,16 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        // TODO: Add your drawing code here
+        _spriteBatch.Begin();
+        Platform.Draw(_spriteBatch);
+        _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private Texture2D LoadFromFile(string filename)
+    {
+        using var stream = File.OpenRead(filename);
+        return Texture2D.FromStream(_graphics.GraphicsDevice, stream);
     }
 }
