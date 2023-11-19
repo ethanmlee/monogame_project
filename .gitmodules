@@ -1,3 +1,6 @@
 [submodule "Monogame.ImGui"]
 	path = Monogame.ImGui
 	url = https://github.com/dovker/Monogame.ImGui
+[submodule "MonoGame.ImGuiNet"]
+	path = MonoGame.ImGuiNet
+	url = https://github.com/Mezo-hx/MonoGame.ImGuiNet.git

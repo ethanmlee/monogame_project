@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -7,9 +6,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Input;
 using MonoGame.Extended.Tweening;
+using MonoGame.ImGuiNet;
 using VoxelEngine.Scripts;
 using VoxelEngine.Scripts.Systems;
-using MonoGame.ImGui;
 
 namespace VoxelEngine
 {
@@ -42,9 +41,11 @@ namespace VoxelEngine
         private SkySphere _skySphere = new SkySphere();
         private OrientationArrows _orientationArrows;
 
-        public ImGuiRenderer ImGuiRenderer;
+        public ImGuiRenderer GuiRenderer;
 
         private int _brushSize = 1;
+
+        private bool isCamGrounded = false;
 
         public Game1()
         {
@@ -64,11 +65,12 @@ namespace VoxelEngine
             IsFixedTimeStep = true;
             _graphics.ApplyChanges();
             ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(60), (float)_graphics.PreferredBackBufferWidth / (float)_graphics.PreferredBackBufferHeight, 0.1f, 1000f);
-
+            
+            
             MouseExtended.SetPosition(_startMousePoint);
             IsMouseVisible = false;
 
-            ImGuiRenderer = new ImGuiRenderer(this).Initialize().RebuildFontAtlas();
+            GuiRenderer = new ImGuiRenderer(this);
             ImGui.GetIO().ConfigFlags = ImGuiConfigFlags.DockingEnable;
 
             base.Initialize();
@@ -83,6 +85,8 @@ namespace VoxelEngine
             _orientationArrows = new OrientationArrows(GraphicsDevice);
 
             VoxelWorld = new VoxelWorld(GraphicsDevice);
+            
+            GuiRenderer.RebuildFontAtlas();
         }
 
         protected override void Update(GameTime gameTime)
@@ -109,8 +113,23 @@ namespace VoxelEngine
             var moveInput = new Vector3((keyboardState.IsKeyDown(Keys.D) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.A) ? 1 : 0), (keyboardState.IsKeyDown(Keys.Space) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.LeftShift) ? 1 : 0), (keyboardState.IsKeyDown(Keys.W) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.S) ? 1 : 0));
             Vector3 movementRelative = CamRotationMatrix.Forward * moveInput.Z + CamRotationMatrix.Right * moveInput.X + CamRotationMatrix.Up * moveInput.Y;
             if (movementRelative.Length() > 0) movementRelative = Vector3.Normalize(movementRelative) * movementRelative.Length();
-            CamPos += movementRelative * (float)gameTime.ElapsedGameTime.TotalSeconds * 50;
             
+            movementRelative.Y = 0;
+            CamPos += movementRelative * (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
+
+            if (!isCamGrounded)
+            {
+                CamPos.Y += -6f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            }
+            
+            isCamGrounded = false;
+            VoxelWorld.PerformRaycast(CamPos, Vector3.Down, 2, (blockPos, blockId, faceDir) =>
+            {
+                isCamGrounded = true;
+                float standingHeight = (blockPos.Y + 1) + 2;
+                CamPos.Y = MathHelper.Lerp(CamPos.Y, standingHeight, 10 * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            });
+
             ViewMatrix = Matrix.CreateLookAt(CamPos, CamPos + Vector3.Transform(Vector3.Forward, CamRotationMatrix), Vector3.Up);
 
             BoundingFrustum.Matrix = ViewMatrix * ProjectionMatrix;
@@ -163,24 +182,25 @@ namespace VoxelEngine
             base.Draw(gameTime);
             
             if (!ShowDebugOverlay) return;
-            _spriteBatch.Begin();
-            ImGuiRenderer.BeginLayout(gameTime);
-            ImGui.DockSpaceOverViewport(null, ImGuiDockNodeFlags.PassthruCentralNode);
-
-            ImGui.BeginMainMenuBar();
             
-            ImGui.EndMainMenuBar();
-
-            ImGui.Begin("Stats");
-                ImGui.Text("Mem: " + (GC.GetTotalMemory(true) / 1000000));
-                ImGui.Text("FPS: " + 1000f / gameTime.ElapsedGameTime.TotalMilliseconds);
-            ImGui.End();
-            
-            ImGui.Begin("Tools");
-                ImGui.SliderInt("Brush Size", ref _brushSize, 1, 5);
-            ImGui.End();
-            ImGuiRenderer.EndLayout();
-            _spriteBatch.End();
+            // GuiRenderer.BeginLayout(gameTime);
+            // ImGui.Begin("My First Tool");
+            // ImGui.End();
+            // ImGui.DockSpaceOverViewport(null, ImGuiDockNodeFlags.PassthruCentralNode);
+            //
+            // ImGui.BeginMainMenuBar();
+            //
+            // ImGui.EndMainMenuBar();
+            //
+            // ImGui.Begin("Stats");
+            //     ImGui.Text("Mem: " + (GC.GetTotalMemory(true) / 1000000));
+            //     ImGui.Text("FPS: " + 1000f / gameTime.ElapsedGameTime.TotalMilliseconds);
+            // ImGui.End();
+            //
+            // ImGui.Begin("Tools");
+            //     ImGui.SliderInt("Brush Size", ref _brushSize, 1, 5);
+            // ImGui.End();
+            // GuiRenderer.EndLayout();
         }
     }
 }

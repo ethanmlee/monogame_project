@@ -5,13 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
-namespace VoxelEngine.Scripts.Systems;
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
+namespace VoxelEngine.Scripts.Systems;
 
 public class VoxelWorld
 {
@@ -94,12 +92,12 @@ public class VoxelWorld
             newValidChunks.Add(newChunkCoord);
         }
         // Remove chunks
-        var chunksToRemove = ValidChunkCoords.Except(newValidChunks);
-        await Parallel.ForEachAsync(chunksToRemove, _worldGenCancellationToken,  (chunk, ct) =>
-        {
-            Chunks[chunk].DisposeMesh();
-            return ValueTask.CompletedTask;
-        });
+        // var chunksToRemove = ValidChunkCoords.Except(newValidChunks);
+        // await Parallel.ForEachAsync(chunksToRemove, _worldGenCancellationToken,  (chunk, ct) =>
+        // {
+        //     Chunks[chunk].DisposeMesh();
+        //     return ValueTask.CompletedTask;
+        // });
         // Create chunks
         var chunksToCreate = newValidChunks.Except(ValidChunkCoords).ToArray();
         var newChunks = Chunks
@@ -234,7 +232,8 @@ public class VoxelWorld
         return IsChunkInWorld(new ChunkCoord(chunkCoordVector3));
     }
     
-    public void PerformRaycast(Vector3 origin, Vector3 direction, double radius, Action<Vector3Int, byte, Vector3> callback)
+    public void PerformRaycast(Vector3 origin, Vector3 direction, double radius,
+        Action<Vector3Int, byte, Vector3> callback, bool isLooping = true)
     {
         int x = (int)Math.Floor(origin.X);
         int y = (int)Math.Floor(origin.Y);
@@ -266,12 +265,26 @@ public class VoxelWorld
         var worldSizeX = VoxelData.WorldSizeChunks.X * VoxelData.chunkSize.X;
         var worldSizeY = VoxelData.WorldSizeChunks.Y * VoxelData.chunkSize.Y;
         var worldSizeZ = VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z;
-        while ((stepX > 0 ? x < worldSizeX : x >= 0) &&
-               (stepY > 0 ? y < worldSizeY : y >= 0) &&
-               (stepZ > 0 ? z < worldSizeZ : z >= 0))
+        while (true)
         {
-            if (x < 0 || y < 0 || z < 0 || x >= worldSizeX || y >= worldSizeY || z >= worldSizeZ)
-                break;
+            if (isLooping)
+            {
+                // Wrap around when reaching the edge of the world
+                if (x < 0) x += worldSizeX;
+                if (z < 0) z += worldSizeZ;
+                if (x >= worldSizeX) x %= worldSizeX;
+                if (z >= worldSizeZ) z %= worldSizeZ;
+            }
+            else
+            {
+                if ((stepX > 0 ? x >= worldSizeX : x < 0) ||
+                    (stepY > 0 ? y >= worldSizeY : y < 0) ||
+                    (stepZ > 0 ? z >= worldSizeZ : z < 0))
+                {
+                    // Stop ray if outside the world bounds (non-looping)
+                    break;
+                }
+            }
 
             byte voxelId = GetVoxel(new Vector3(x, y, z));
             if (voxelId != 0)

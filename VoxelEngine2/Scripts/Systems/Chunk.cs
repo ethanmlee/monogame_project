@@ -92,6 +92,12 @@ public class Chunk
         var bounding = new BoundingBox(newPos, newPos + VoxelData.chunkSize);
         if (Game1.BoundingFrustum.Contains(bounding) == ContainmentType.Disjoint) return;
 
+        // Horizon curvature emulation
+        // Vector3 flattenedCamPos = Game1.CamPos * new Vector3(1, 0, 1);
+        // Vector3 flattenedSelfPos = newPos * new Vector3(1, 0, 1);
+        // Vector3 curveDownVector = new Vector3(0, -MathF.Max(0, CalculateDistanceToBorder(flattenedCamPos, flattenedSelfPos) - 4000) * 0.001f, 0);
+        // newPos += curveDownVector;
+
         _graphicsDevice.SetVertexBuffers(_binding);
         _graphicsDevice.Indices = _ib;
         _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(_appearScale) * Matrix.CreateTranslation(newPos));
@@ -353,6 +359,29 @@ public class Chunk
     public int GetBlockArrayIndex(Vector3 pos)
     {
         return (int)(VoxelData.chunkSize.Y * VoxelData.chunkSize.X * pos.Z + VoxelData.chunkSize.X * pos.Y + pos.X);
+    }
+    
+    public float CalculateDistanceToBorder(Vector3 point, Vector3 chunkPos)
+    {
+        // Calculate the half-size of the cube in each dimension
+        float halfSizeX = VoxelData.chunkSize.X / 2.0f;
+        float halfSizeY = VoxelData.chunkSize.Y / 2.0f;
+        float halfSizeZ = VoxelData.chunkSize.Z / 2.0f;
+
+        // Calculate the absolute differences between the point and the cube's center
+        float dx = MathF.Abs(point.X - (chunkPos.X + VoxelData.chunkSize.X * 0.5f));
+        float dy = MathF.Abs(point.Y - (chunkPos.Y + VoxelData.chunkSize.Y * 0.5f));
+        float dz = MathF.Abs(point.Z - (chunkPos.Z + VoxelData.chunkSize.Z * 0.5f));
+
+        // Clamp the differences to be within the half-size of the cube
+        dx = MathF.Max(dx - halfSizeX, 0);
+        dy = MathF.Max(dy - halfSizeY, 0);
+        dz = MathF.Max(dz - halfSizeZ, 0);
+
+        // Calculate the distance using the clamped differences
+        float distance = (dx * dx + dy * dy + dz * dz);
+
+        return distance;
     }
 }
 

@@ -33,10 +33,21 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
     VertexShaderOutput output = (VertexShaderOutput)0;
 
     // output.Position = input.Position * _WorldMatrix * _ViewMatrix * _ProjectionMatrix;
-    output.Position = mul(mul(mul(input.Position, _WorldMatrix), _ViewMatrix), _ProjectionMatrix);
-    output.WorldPos = mul(input.Position, _WorldMatrix);
+    
+    float4 pos = input.Position;
+    
+    output.Position = mul(mul(mul(pos, _WorldMatrix), _ViewMatrix), _ProjectionMatrix);
+    output.WorldPos = mul(pos, _WorldMatrix);
     output.Color = input.Color;
     output.Normal = mul(input.Normal, _WorldMatrix);
+    
+    output.Position.y -= 0.0001 * DistanceCurve(
+    output.WorldPos, 
+    inverse(_ViewMatrix)[3].xyz, 
+    10, 
+    64, 
+    2
+    );
 
     return output;
 }

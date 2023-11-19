@@ -46,5 +46,14 @@ float4 DistanceLighting(float4 currentColor, float3 position, float3 lightPositi
     return currentColor;
 }
 
+float DistanceCurve(float3 position, float3 camPosition, float curveStrength, float curveStartDistance = 0, float curvePower = 2)
+{
+    const float dist = max(0, distance(position, camPosition) - curveStartDistance);
+    const float distSquared = pow(dist, curvePower);
+    float result = 0;
+    result = curveStrength * distSquared;
+    return result;
+}
+
 // const float dotProduct = saturate(dot(float3(0, 1, 0), input.Normal));
 // outputColor.rgb = lerp(outputColor.rgb * 0.8, outputColor.rgb, dotProduct);
