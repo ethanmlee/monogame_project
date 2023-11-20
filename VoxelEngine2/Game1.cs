@@ -113,6 +113,8 @@ namespace VoxelEngine
                 CamEulerAngles.X += -mouseDelta.Y * 0.001f;
                 CamEulerAngles.Y += -mouseDelta.X * 0.001f;
             }
+
+            CamEulerAngles.X = MathHelper.Clamp(CamEulerAngles.X, -MathF.PI * 0.499f, MathF.PI * 0.499f);
             CamRotationMatrix = Matrix.CreateRotationX(CamEulerAngles.X) * Matrix.CreateRotationY(CamEulerAngles.Y);
             if (!IsMouseVisible) Mouse.SetPosition(_startMousePoint.X, _startMousePoint.Y);
             // if (!IsMouseVisible) MouseExtended.SetPosition(_startMousePoint);
@@ -194,7 +196,7 @@ namespace VoxelEngine
             VoxelWorld.PerformRaycast(CamPos, CamRotationMatrix.Forward, 10, (hitInfo) =>
             {
                 _selectionCube.IsVisible = true;
-                _selectionCube.Position = hitInfo.BlockPos + Vector3.One * 0.5f;
+                _selectionCube.Position = hitInfo.BlockPosWorld + Vector3.One * 0.5f;
                 if (mouseState.WasButtonJustDown(MouseButton.Right))
                 {
                     VoxelWorld.SetVoxel(hitInfo.BlockPos + hitInfo.FaceDirection, 1);

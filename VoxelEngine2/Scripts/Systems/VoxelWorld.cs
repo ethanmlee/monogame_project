@@ -239,6 +239,10 @@ public class VoxelWorld
         int y = (int)Math.Floor(origin.Y);
         int z = (int)Math.Floor(origin.Z);
 
+        int xWorld = x;
+        int yWorld = y;
+        int zWorld = z;
+
         double dx = direction.X;
         double dy = direction.Y;
         double dz = direction.Z;
@@ -261,7 +265,9 @@ public class VoxelWorld
         byte initialVoxelId = GetVoxel(new Vector3(x, y, z));
         if (initialVoxelId != 0)
         {
-            callback.Invoke(new RaycastVoxelHitInfo(new Vector3Int(x, y, z), initialVoxelId, face, 0f));
+            Vector3Int hitBlockPos = new Vector3Int(x, y, z);
+            Vector3Int hitBlockPosWorld = new Vector3Int(xWorld, yWorld, zWorld);
+            callback.Invoke(new RaycastVoxelHitInfo(hitBlockPos, hitBlockPosWorld, initialVoxelId, face, 0f));
             return;
         }
 
@@ -275,6 +281,10 @@ public class VoxelWorld
         var worldSizeZ = VoxelData.WorldSizeChunks.Z * VoxelData.chunkSize.Z;
         while (true)
         {
+            x = xWorld;
+            y = yWorld;
+            z = zWorld;
+            
             if (isLooping)
             {
                 // Wrap around when reaching the edge of the world
@@ -298,7 +308,9 @@ public class VoxelWorld
             if (voxelId != 0)
             {
                 Vector3Int hitBlockPos = new Vector3Int(x, y, z);
-                callback.Invoke(new RaycastVoxelHitInfo(hitBlockPos, voxelId, face, Vector3.Distance(origin, hitBlockPos)));
+                Vector3Int hitBlockPosWorld = new Vector3Int(xWorld, yWorld, zWorld);
+                callback.Invoke(new RaycastVoxelHitInfo(hitBlockPos, hitBlockPosWorld, voxelId, face,
+                    Vector3.Distance(origin, hitBlockPos)));
                 break;
             }
 
@@ -307,14 +319,14 @@ public class VoxelWorld
                 if (tMaxX < tMaxZ)
                 {
                     if (tMaxX > radius) break;
-                    x += stepX;
+                    xWorld += stepX;
                     tMaxX += tDeltaX;
                     face = new Vector3(-stepX, 0, 0);
                 }
                 else
                 {
                     if (tMaxZ > radius) break;
-                    z += stepZ;
+                    zWorld += stepZ;
                     tMaxZ += tDeltaZ;
                     face = new Vector3(0, 0, -stepZ);
                 }
@@ -324,14 +336,14 @@ public class VoxelWorld
                 if (tMaxY < tMaxZ)
                 {
                     if (tMaxY > radius) break;
-                    y += stepY;
+                    yWorld += stepY;
                     tMaxY += tDeltaY;
                     face = new Vector3(0, -stepY, 0);
                 }
                 else
                 {
                     if (tMaxZ > radius) break;
-                    z += stepZ;
+                    zWorld += stepZ;
                     tMaxZ += tDeltaZ;
                     face = new Vector3(0, 0, -stepZ);
                 }
@@ -365,13 +377,15 @@ public class VoxelWorld
     public struct RaycastVoxelHitInfo
     {
         public Vector3Int BlockPos;
+        public Vector3Int BlockPosWorld;
         public byte BlockId;
         public Vector3 FaceDirection;
         public float Distance;
 
-        public RaycastVoxelHitInfo(Vector3Int blockPos, byte blockId, Vector3 faceDirection, float distance)
+        public RaycastVoxelHitInfo(Vector3Int blockPos, Vector3Int blockPosWorld, byte blockId, Vector3 faceDirection, float distance)
         {
             BlockPos = blockPos;
+            BlockPosWorld = blockPosWorld;
             BlockId = blockId;
             FaceDirection = faceDirection;
             Distance = distance;
