@@ -66,17 +66,17 @@ public struct Vector3Int : IEquatable<Vector3Int>, IEquatable<Vector3>
 
     public static Vector3 operator +(Vector3Int a, Vector3 b)
     {
-        return new Vector3(a.X + (int)b.X, a.Y + (int)b.Y, a.Z + (int)b.Z);
+        return new Vector3(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
     }
 
     public static Vector3 operator -(Vector3Int a, Vector3 b)
     {
-        return new Vector3(a.X - (int)b.X, a.Y - (int)b.Y, a.Z - (int)b.Z);
+        return new Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
     }
 
     public static Vector3 operator *(Vector3Int a, Vector3 b)
     {
-        return new Vector3(a.X * (int)b.X, a.Y * (int)b.Y, a.Z * (int)b.Z);
+        return new Vector3(a.X * b.X, a.Y * b.Y, a.Z * b.Z);
     }
 
     public static Vector3 operator /(Vector3Int a, Vector3 b)

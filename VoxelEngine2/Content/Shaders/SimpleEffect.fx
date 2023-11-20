@@ -45,7 +45,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
     output.WorldPos, 
     inverse(_ViewMatrix)[3].xyz, 
     10, 
-    64, 
+    48, 
     2
     );
 

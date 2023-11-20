@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -45,7 +46,14 @@ namespace VoxelEngine
 
         private int _brushSize = 1;
 
-        private bool isCamGrounded = false;
+        private bool _isCamGrounded = false;
+        private Vector3 _playerVelocity = Vector3.Zero;
+
+        public static readonly float GravityEarth =    9.81f;
+        public static readonly float GravityMoon =     1.62f;
+        public static readonly float JumpVelocityEarthAverage = 3.77f; // 28 inches peak jump height on Earth
+        public static readonly float JumpVelocityEarthOneMeter = 4.42944691807002f;
+        public static readonly float PlayerHeight = 2.7f;
 
         public Game1()
         {
@@ -110,42 +118,90 @@ namespace VoxelEngine
             // if (!IsMouseVisible) MouseExtended.SetPosition(_startMousePoint);
 
             // Flying Position
-            var moveInput = new Vector3((keyboardState.IsKeyDown(Keys.D) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.A) ? 1 : 0), (keyboardState.IsKeyDown(Keys.Space) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.LeftShift) ? 1 : 0), (keyboardState.IsKeyDown(Keys.W) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.S) ? 1 : 0));
-            Vector3 movementRelative = CamRotationMatrix.Forward * moveInput.Z + CamRotationMatrix.Right * moveInput.X + CamRotationMatrix.Up * moveInput.Y;
+            var moveInput = new Vector3(
+                (keyboardState.IsKeyDown(Keys.D) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.A) ? 1 : 0), 
+                0, //(keyboardState.IsKeyDown(Keys.Space) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.LeftShift) ? 1 : 0), 
+                (keyboardState.IsKeyDown(Keys.W) ? 1 : 0) - (keyboardState.IsKeyDown(Keys.S) ? 1 : 0));
+            Vector3 forwardFlattened = Vector3.Normalize(CamRotationMatrix.Forward * new Vector3(1, 0, 1));
+            Vector3 movementRelative = forwardFlattened * moveInput.Z + CamRotationMatrix.Right * moveInput.X + CamRotationMatrix.Up * moveInput.Y;
             if (movementRelative.Length() > 0) movementRelative = Vector3.Normalize(movementRelative) * movementRelative.Length();
             
             movementRelative.Y = 0;
-            CamPos += movementRelative * (float)gameTime.ElapsedGameTime.TotalSeconds * 10;
-
-            if (!isCamGrounded)
-            {
-                CamPos.Y += -6f * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            }
+            Vector3 playerPlanarVelocity = _playerVelocity.XZ();
+            playerPlanarVelocity = Vector3.Lerp(playerPlanarVelocity,
+                Vector3Utils.ClampMagnitude(movementRelative, 1f) * 6,
+                (_isCamGrounded ? 20 : 1) * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            _playerVelocity.X = playerPlanarVelocity.X;
+            _playerVelocity.Z = playerPlanarVelocity.Z;
             
-            isCamGrounded = false;
-            VoxelWorld.PerformRaycast(CamPos, Vector3.Down, 2, (blockPos, blockId, faceDir) =>
+            _playerVelocity += Vector3.Down * GravityMoon * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (keyboardState.WasKeyJustUp(Keys.Space))
             {
-                isCamGrounded = true;
-                float standingHeight = (blockPos.Y + 1) + 2;
-                CamPos.Y = MathHelper.Lerp(CamPos.Y, standingHeight, 10 * (float)gameTime.ElapsedGameTime.TotalSeconds);
-            });
+                _playerVelocity += Vector3.Up * JumpVelocityEarthAverage;
+            }
+
+            Vector3 velocityThisFrame = _playerVelocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            
+            bool wasGrounded = _isCamGrounded;
+            _isCamGrounded = false;
+            // Ground Hit
+            if (_playerVelocity.Y < 0)
+            {
+                // Ground Check
+                VoxelWorld.PerformRaycast(CamPos + Vector3.Down * (PlayerHeight - 1.001f), Vector3.Down, 1.0001 + MathF.Abs(velocityThisFrame.Y),
+                    (hitInfo) =>
+                    {
+                        float standingHeight = (hitInfo.BlockPos.Y + 1) + PlayerHeight;
+                        // Stop falling, allow moving up
+                        if (hitInfo.Distance > 0)
+                        {
+                            _playerVelocity.Y = MathF.Max(-0.2f, _playerVelocity.Y);
+                        }
+
+                        // If we are hitting ground while already grounded, lerp to new step height
+                        if (wasGrounded)
+                        {
+                            
+                            // TODO: Check to make sure this won't cause a ceiling collision, if it will, act like a wall collision
+                            CamPos.Y = MathHelper.Lerp(CamPos.Y, standingHeight, 
+                                10 * (float)gameTime.ElapsedGameTime.TotalSeconds);
+                        } 
+                        else
+                        {
+                            CamPos.Y = standingHeight;
+                        }
+
+                        _isCamGrounded = true;
+                    });
+            }
+            else
+            {
+                // Ceiling Hit
+                VoxelWorld.PerformRaycast(CamPos, Vector3.Up, 0.1 + velocityThisFrame.Y, (hitInfo) =>
+                {
+                    _playerVelocity.Y = 0;
+                });
+            }
+
+            CamPos += _playerVelocity * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             ViewMatrix = Matrix.CreateLookAt(CamPos, CamPos + Vector3.Transform(Vector3.Forward, CamRotationMatrix), Vector3.Up);
 
             BoundingFrustum.Matrix = ViewMatrix * ProjectionMatrix;
 
             _selectionCube.IsVisible = false;
-            VoxelWorld.PerformRaycast(CamPos, CamRotationMatrix.Forward, 10, ( blockPos,  blockId,  faceDir) =>
+            VoxelWorld.PerformRaycast(CamPos, CamRotationMatrix.Forward, 10, (hitInfo) =>
             {
                 _selectionCube.IsVisible = true;
-                _selectionCube.Position = new Vector3(blockPos.X, blockPos.Y, blockPos.Z) + Vector3.One * 0.5f;
+                _selectionCube.Position = hitInfo.BlockPos + Vector3.One * 0.5f;
                 if (mouseState.WasButtonJustDown(MouseButton.Right))
                 {
-                    VoxelWorld.SetVoxel(blockPos + faceDir, 1);
+                    VoxelWorld.SetVoxel(hitInfo.BlockPos + hitInfo.FaceDirection, 1);
                 }
                 if (mouseState.WasButtonJustDown(MouseButton.Left))
                 {
-                    VoxelWorld.SetVoxel(blockPos, 0);
+                    VoxelWorld.SetVoxel(hitInfo.BlockPos, 0);
                 }
             });
             _selectionCube.Update(gameTime);
@@ -201,6 +257,22 @@ namespace VoxelEngine
             //     ImGui.SliderInt("Brush Size", ref _brushSize, 1, 5);
             // ImGui.End();
             // GuiRenderer.EndLayout();
+        }
+        
+        public float CalculateInitialVelocity(float height, float gravity = 9.81f)
+        {
+            if (height < 0)
+            {
+                throw new ArgumentException("Height must be a non-negative value.");
+            }
+
+            if (gravity <= 0)
+            {
+                throw new ArgumentException("Gravity must be a positive value.");
+            }
+
+            float initialVelocity = MathF.Sqrt(2 * gravity * height);
+            return initialVelocity;
         }
     }
 }

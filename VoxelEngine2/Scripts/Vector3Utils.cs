@@ -3,33 +3,8 @@ using Microsoft.Xna.Framework;
 
 namespace VoxelEngine.Scripts;
 
-public static class Extensions
+public static class Vector3Utils
 {
-    public static int FloorToInt(this float f)
-    {
-        return (int)MathF.Floor(f);
-    }
-    
-    public static int RoundToInt(this float f)
-    {
-        return (int)MathF.Round(f);
-    }
-    
-    public static Vector3 XY(this Vector3 vector)
-    {
-        return new Vector3(vector.X, vector.Y, 0.0f);
-    }
-
-    public static Vector3 XZ(this Vector3 vector)
-    {
-        return new Vector3(vector.X, 0.0f, vector.Z);
-    }
-
-    public static Vector3 YZ(this Vector3 vector)
-    {
-        return new Vector3(0.0f, vector.Y, vector.Z);
-    }
-    
     public static Vector3 ClampMagnitude(Vector3 vector, float maxLength)
     {
         if (maxLength < 0.0f)

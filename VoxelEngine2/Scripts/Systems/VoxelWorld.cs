@@ -233,7 +233,7 @@ public class VoxelWorld
     }
     
     public void PerformRaycast(Vector3 origin, Vector3 direction, double radius,
-        Action<Vector3Int, byte, Vector3> callback, bool isLooping = true)
+        Action<RaycastVoxelHitInfo> callback, bool isLooping = true)
     {
         int x = (int)Math.Floor(origin.X);
         int y = (int)Math.Floor(origin.Y);
@@ -256,6 +256,14 @@ public class VoxelWorld
         double tDeltaZ = stepZ / dz;
 
         Vector3 face = new Vector3();
+        
+        // Check if the ray starts inside a voxel
+        byte initialVoxelId = GetVoxel(new Vector3(x, y, z));
+        if (initialVoxelId != 0)
+        {
+            callback.Invoke(new RaycastVoxelHitInfo(new Vector3Int(x, y, z), initialVoxelId, face, 0f));
+            return;
+        }
 
         if (dx == 0 && dy == 0 && dz == 0)
             throw new ArgumentOutOfRangeException("Raycast in zero direction!");
@@ -289,7 +297,8 @@ public class VoxelWorld
             byte voxelId = GetVoxel(new Vector3(x, y, z));
             if (voxelId != 0)
             {
-                callback.Invoke(new Vector3Int(x, y, z), voxelId, face);
+                Vector3Int hitBlockPos = new Vector3Int(x, y, z);
+                callback.Invoke(new RaycastVoxelHitInfo(hitBlockPos, voxelId, face, Vector3.Distance(origin, hitBlockPos)));
                 break;
             }
 
@@ -351,6 +360,22 @@ public class VoxelWorld
     private double Mod(double value, double modulus)
     {
         return (value % modulus + modulus) % modulus;
+    }
+
+    public struct RaycastVoxelHitInfo
+    {
+        public Vector3Int BlockPos;
+        public byte BlockId;
+        public Vector3 FaceDirection;
+        public float Distance;
+
+        public RaycastVoxelHitInfo(Vector3Int blockPos, byte blockId, Vector3 faceDirection, float distance)
+        {
+            BlockPos = blockPos;
+            BlockId = blockId;
+            FaceDirection = faceDirection;
+            Distance = distance;
+        }
     }
 
 }
