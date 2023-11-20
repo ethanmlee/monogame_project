@@ -64,20 +64,6 @@ public class Chunk
 
         _position = Coord.Vector * VoxelData.chunkSize;
     }
-    
-    public void Update()
-    {
-        if (_appearScale < 0.9f && HasMesh && _appearTween is not {IsAlive: true})
-        {
-            // _appearTween = Game1.Tweener.TweenTo(this, chunk => chunk._appearScale, 1f, 0.25f, 0f)
-            //     .Easing(EasingFunctions.CubicOut);
-            _appearScale = 1f;
-        }
-        
-        if (!_isDirty) return;
-        _isDirty = false;
-        Task.Factory.StartNew(CreateMesh);
-    }
 
     public void Draw()
     {
@@ -100,7 +86,7 @@ public class Chunk
 
         _graphicsDevice.SetVertexBuffers(_binding);
         _graphicsDevice.Indices = _ib;
-        _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(_appearScale) * Matrix.CreateTranslation(newPos));
+        _world.ParamWorldMatrix.SetValue(Matrix.CreateScale(1.0f) * Matrix.CreateTranslation(newPos));
         VoxelWorld.EffectPass.Apply();
         _graphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, VoxelData.ChunkSizeTotal * 36);
         _graphicsDevice.SetVertexBuffers(null);
@@ -116,32 +102,29 @@ public class Chunk
         _appearScale = 0.001f;
     }
 
-    public Task GenerateVoxelMap()
+    public void GenerateVoxelMap()
     {
-        return Task.Factory.StartNew((() =>
+        if (IsGenerated) return;
+        
+        for (var i = 0; i < VoxelMap.Length; i++)
         {
-            if (IsGenerated) return;
-            
-            for (var i = 0; i < VoxelMap.Length; i++)
+            var voxelPos = IndexToVector(i);
+            Vector3 worldPos = (voxelPos + _position);
+            VoxelMap[i] = new VoxelState(0);
+            float yPerlin = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.5f) * 8 + 50;
+            float yPerlin2 = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.2f) * 30 + 50;
+            yPerlin = (yPerlin + yPerlin2) / 2f;
+            yPerlin += TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 2f);
+            if (worldPos.Y <= yPerlin)
             {
-                var voxelPos = IndexToVector(i);
-                Vector3 worldPos = (voxelPos + _position);
-                VoxelMap[i] = new VoxelState(0);
-                float yPerlin = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.5f) * 8 + 50;
-                float yPerlin2 = TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 0.2f) * 30 + 50;
-                yPerlin = (yPerlin + yPerlin2) / 2f;
-                yPerlin += TilingNoise.GetNoiseWorld((int)worldPos.X, (int)worldPos.Z, 2f);
-                if (worldPos.Y <= yPerlin)
+                VoxelMap[i] = new VoxelState
                 {
-                    VoxelMap[i] = new VoxelState
-                    {
-                        Index = (byte)Randomizer.Range(1, 4)
-                    };
-                }
+                    Index = (byte)Randomizer.Range(1, 4)
+                };
             }
-
-            IsGenerated = true;
-        }));
+        }
+        
+        IsGenerated = true;
     }
 
     public byte GetVoxel(Vector3 pos)
@@ -151,20 +134,12 @@ public class Chunk
 
     public void SetVoxel(Vector3 pos, byte index)
     {
-        _isDirty = true;
         VoxelMap[PosToIndex(pos)].Index = index;
     }
 
-    public void SetDirty()
+    public void CreateMesh()
     {
-        _isDirty = true;
-    }
-
-    public Task CreateMesh()
-    {
-        var task = Task.Factory.StartNew(UpdateBlocks);
-
-        return task;
+        UpdateBlocks();
     }
     
     private bool IsVoxelInChunk(int x, int y, int z)

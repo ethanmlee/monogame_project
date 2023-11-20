@@ -26,6 +26,9 @@ public class VoxelWorld
 
     private CancellationToken _worldGenCancellationToken;
 
+    private Queue<ChunkCoord> _chunksToGenerate = new Queue<ChunkCoord>();
+    private Queue<ChunkCoord> _chunksToRefresh = new Queue<ChunkCoord>();
+
     public VoxelWorld(GraphicsDevice graphicsDevice)
     {
         Effect = Game1.ContentManager.Load<Effect>("Shaders/SimpleEffect");
@@ -47,39 +50,15 @@ public class VoxelWorld
             }
         }
 
-        Task.Factory.StartNew((async () =>
-        {
-            while (!_worldGenCancellationToken.IsCancellationRequested)
-            {
-                await Task.Delay(10);
-                await GenerateValidChunks();
-            }
+        GenerateValidChunks();
 
-            return Task.CompletedTask;
-        }));
+        Task.Factory.StartNew(AsyncChunkGenerationTask);
+        Task.Factory.StartNew(AsyncChunkMeshingTask);
 
         // GenerateAllChunks();
     }
 
-    public async Task GenerateAllChunks()
-    {
-        ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
-        var newValidChunks = new HashSet<ChunkCoord>();
-        for (int x = -VoxelData.RenderDistance; x <= VoxelData.RenderDistance; x++)
-        for (int y = -VoxelData.RenderDistance; y <= VoxelData.RenderDistance; y++)
-        for (int z = -VoxelData.RenderDistance; z <= VoxelData.RenderDistance; z++)
-        {
-            newValidChunks.Add(new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z));
-        }
-
-        ValidChunkCoords = newValidChunks;
-        
-        await Task.WhenAll(Chunks.Values.Select((chunk => chunk.GenerateVoxelMap())));
-
-        await Task.WhenAll(Chunks.Values.Select((chunk => chunk.CreateMesh())));
-    }
-
-    public async Task GenerateValidChunks()
+    public void GenerateValidChunks()
     {
         ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
         var newValidChunks = new HashSet<ChunkCoord>((int)Math.Pow(VoxelData.RenderDistance * 2, 3));
@@ -114,18 +93,47 @@ public class VoxelWorld
         //     chunk.Value.CreateMesh().WaitAsync(ct);
         //     return ValueTask.CompletedTask;
         // });
-        await Task.WhenAll(newChunks.Select((chunk => chunk.Value.GenerateVoxelMap())));
-        await Task.WhenAll(newChunks.Select((chunk => chunk.Value.CreateMesh())));
+        
+        foreach (var (key, value) in newChunks)
+        {
+            _chunksToGenerate.Enqueue(key);
+        }
         
         ValidChunkCoords = newValidChunks;
     }
 
+    private async Task AsyncChunkGenerationTask()
+    {
+        while (true)
+        {
+            if (_chunksToGenerate.TryDequeue(out var chunkToGenerate))
+            {
+                Chunks[chunkToGenerate].GenerateVoxelMap();
+                _chunksToRefresh.Enqueue(chunkToGenerate);
+            }
+            await Task.Yield();
+        }
+    }
+    
+    private async Task AsyncChunkMeshingTask()
+    {
+        while (true)
+        {
+            for (int i = 0; i < 1; i++)
+            {
+                if (_chunksToRefresh.TryDequeue(out var chunkToRefresh))
+                {
+                    Chunks[chunkToRefresh].CreateMesh();
+                }
+            }
+            await Task.Yield();
+        }
+    }
+
     public void Update()
     {
-        foreach (Chunk chunk in Chunks.Values)
-        {
-            chunk.Update();
-        }
+        // Refresh the first chunk in the queue to refresh
+        
     }
 
     public void Draw(GraphicsDevice graphicsDevice)
@@ -148,6 +156,7 @@ public class VoxelWorld
         Chunk chunk = GetChunk(coord);
         Vector3Int posInChunk = new Vector3Int(worldPos) % VoxelData.chunkSize;
         chunk.SetVoxel(posInChunk, index);
+        RefreshChunk(coord);
 
         if (posInChunk.X == 0)
             RefreshChunk(new ChunkCoord(coord.X - 1, coord.Y, coord.Z));
@@ -176,7 +185,7 @@ public class VoxelWorld
     public void RefreshChunk(ChunkCoord coord)
     {
         if (!IsChunkInWorld(coord)) return;
-        GetChunk(coord).SetDirty();
+        _chunksToRefresh.Enqueue(coord);
     }
 
     public Chunk GetChunk(Vector3 pos)
