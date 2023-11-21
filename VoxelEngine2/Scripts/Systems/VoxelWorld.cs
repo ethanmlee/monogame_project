@@ -55,7 +55,6 @@ public class VoxelWorld
 
         Task.Factory.StartNew(AsyncChunkGenerationTask);
         Task.Factory.StartNew(AsyncChunkMeshingTask);
-        Task.Factory.StartNew(AsyncChunkMeshingUserTask);
 
         // GenerateAllChunks();
     }
@@ -132,11 +131,12 @@ public class VoxelWorld
             await Task.Yield();
         }
     }
-    
-    private async Task AsyncChunkMeshingUserTask()
+
+    public void Update()
     {
-        int loopCount = 6;
-        while (true)
+        // Refresh all user edited chunks on main thread so it's an instant response for the player
+        int loopCount = 3;
+        while (_chunksToRefreshUser.Count > 0)
         {
             for (int i = 0; i < loopCount; i++)
             {
@@ -145,14 +145,9 @@ public class VoxelWorld
                     Chunks[chunkToRefresh].CreateMesh();
                 }
             }
-            await Task.Yield();
-        }
-    }
 
-    public void Update()
-    {
-        // Refresh the first chunk in the queue to refresh
-        
+            break;
+        }
     }
 
     public void Draw(GraphicsDevice graphicsDevice)

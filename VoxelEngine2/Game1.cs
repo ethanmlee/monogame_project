@@ -252,10 +252,12 @@ namespace VoxelEngine
                     {
                         VoxelWorld.SetVoxel(spherePosition, 1);
                     }
+                    _selectionCube.IsVisible = false;
                 }
                 if (MouseState.WasButtonJustDown(MouseButton.Left))
                 {
                     VoxelWorld.SetVoxel(hitInfo.BlockPos, 0);
+                    _selectionCube.IsVisible = false;
                 }
             });
             _selectionCube.Update(gameTime);
