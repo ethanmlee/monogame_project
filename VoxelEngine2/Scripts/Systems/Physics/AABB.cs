@@ -14,9 +14,9 @@ public struct AABB
     }
     
     public float Right => (Size.X * 0.5f);
-    public float Left => (Size.X * 0.5f);
+    public float Left => -(Size.X * 0.5f);
     public float Top => (Size.Y * 0.5f);
-    public float Bottom => (Size.Y * 0.5f);
+    public float Bottom => -(Size.Y * 0.5f);
     public float Front => (Size.Z * 0.5f);
-    public float Back =>  (Size.Z * 0.5f);
+    public float Back => -(Size.Z * 0.5f);
 }

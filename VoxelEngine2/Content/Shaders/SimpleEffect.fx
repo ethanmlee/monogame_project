@@ -55,7 +55,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
     float4 outputColor = input.Color;
-    outputColor = DistanceLighting(outputColor, input.WorldPos, inverse(_ViewMatrix)[3].xyz, 192, 0.5, 0.1);
+    outputColor = DistanceLighting(outputColor, input.WorldPos, inverse(_ViewMatrix)[3].xyz, 192, 0.1, 0.01);
     outputColor.a = 1;
     return saturate(outputColor);
 }

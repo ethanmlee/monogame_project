@@ -253,6 +253,9 @@ public class VoxelWorld
     public void PerformRaycast(Vector3 origin, Vector3 direction, double radius,
         Action<RaycastVoxelHitInfo> callback, bool isLooping = true)
     {
+        if (direction.X == -0) direction.X = 0;
+        if (direction.Y == -0) direction.Y = 0;
+        if (direction.Z == -0) direction.Z = 0;
         int x = (int)Math.Floor(origin.X);
         int y = (int)Math.Floor(origin.Y);
         int z = (int)Math.Floor(origin.Z);

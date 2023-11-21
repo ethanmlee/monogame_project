@@ -55,7 +55,8 @@ namespace VoxelEngine
         public static readonly float GravityMoon =     1.62f;
         public static readonly float JumpVelocityEarthAverage = 3.77f; // 28 inches peak jump height on Earth
         public static readonly float JumpVelocityEarthOneMeter = 4.42944691807002f;
-        public static readonly float PlayerHeight = 2.5f;
+        public static readonly float PlayerHeight = 2.7f;
+        public static readonly float PlayerCamHeight = 2.5f;
 
         public static KeyboardStateExtended KeyboardState;
         public static MouseStateExtended MouseState;
@@ -260,6 +261,14 @@ namespace VoxelEngine
                     _selectionCube.IsVisible = false;
                 }
             });
+            
+            if (MouseState.WasButtonJustDown(MouseButton.Middle))
+            {
+                VoxelWorld.PerformRaycast(CamPos, CamRotationMatrix.Forward, 400, (hitInfo) =>
+                {
+                    CamPos = hitInfo.BlockPos + Vector3.Up * (PlayerHeight + 1) + Vector3.One.XZ() * 0.5f;
+                });
+            }
             _selectionCube.Update(gameTime);
         }
 
@@ -272,63 +281,64 @@ namespace VoxelEngine
             bool wasGrounded = _isCamGrounded;
             _isCamGrounded = false;
             // Ground Hit
-            if (_playerVelocity.Y < 0)
-            {
-                // Ground Check
-                VoxelWorld.PerformRaycast(CamPos + Vector3.Down * (PlayerHeight - 1.1f), Vector3.Down,
-                    1.1 + MathF.Abs(velocityThisFrame.Y),
-                    (hitInfo) =>
-                    {
-                        float standingHeight = (hitInfo.BlockPos.Y + 1) + PlayerHeight;
-                        // Stop falling, allow moving up
-                        if (hitInfo.Distance > 0)
-                        {
-                            _playerVelocity.Y = MathF.Max(-0.2f, _playerVelocity.Y);
-
-                            // If we are hitting ground while already grounded, lerp to new step height
-                            if (wasGrounded)
-                            {
-                                // TODO: Check to make sure this won't cause a ceiling collision, if it will, act like a wall collision
-                                CamPos.Y = MathHelper.Lerp(CamPos.Y, standingHeight,
-                                    10 * (float)gameTime.ElapsedGameTime.TotalSeconds);
-                            }
-                        }
-
-
-                        if (!wasGrounded)
-                        {
-                            CamPos.Y = standingHeight;
-                        }
-
-                        _isCamGrounded = true;
-                    });
-            }
-            else
-            {
-                // Ceiling Hit
-                VoxelWorld.PerformRaycast(CamPos, Vector3.Up, 0.1 + velocityThisFrame.Y, (hitInfo) =>
-                {
-                    _playerVelocity.Y = 0;
-                });
-            }
+            // if (_playerVelocity.Y < 0)
+            // {
+            //     // Ground Check
+            //     VoxelWorld.PerformRaycast(CamPos + Vector3.Down * (PlayerHeight - 1.1f), Vector3.Down,
+            //         1.1 + MathF.Abs(velocityThisFrame.Y),
+            //         (hitInfo) =>
+            //         {
+            //             float standingHeight = (hitInfo.BlockPos.Y + 1) + PlayerHeight;
+            //             // Stop falling, allow moving up
+            //             if (hitInfo.Distance > 0)
+            //             {
+            //                 _playerVelocity.Y = MathF.Max(-0.2f, _playerVelocity.Y);
+            //
+            //                 // If we are hitting ground while already grounded, lerp to new step height
+            //                 // if (wasGrounded)
+            //                 // {
+            //                 //     // TODO: Check to make sure this won't cause a ceiling collision, if it will, act like a wall collision
+            //                 //     CamPos.Y = MathHelper.Lerp(CamPos.Y, standingHeight,
+            //                 //         10 * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            //                 // }
+            //             }
+            //
+            //             CamPos.Y = standingHeight;
+            //
+            //             _isCamGrounded = true;
+            //         });
+            // }
+            // else
+            // {
+            //     // Ceiling Hit
+            //     VoxelWorld.PerformRaycast(CamPos, Vector3.Up, 0.1 + velocityThisFrame.Y, (hitInfo) =>
+            //     {
+            //         _playerVelocity.Y = 0;
+            //     });
+            // }
 
             // Wall Collision
-            if (_playerVelocity.XZ().LengthSquared() > 0)
+            float skinWidth = 0.05f;
+            float skinWidthHalf = skinWidth * 0.5f;
+            
+            AABB boundingBox = new AABB(CamPos + (Vector3.Down * PlayerCamHeight) + (Vector3.Up * (PlayerHeight * 0.5f)),
+                new Vector3(0.6f, PlayerHeight, 0.6f));
+            VoxelWorld.RaycastVoxelHitInfo hitInfo = new VoxelWorld.RaycastVoxelHitInfo();
+            CollideAndSlide(boundingBox, boundingBox.Center, Vector3.Right, (int)MathF.Sign(_playerVelocity.X),
+                velocityThisFrame.X, boundingBox.Right, boundingBox.Front, boundingBox.Top, Vector3.Forward,
+                Vector3.Up, skinWidthHalf, out hitInfo);
+            CollideAndSlide(boundingBox, boundingBox.Center, Vector3.Forward, (int)MathF.Sign(_playerVelocity.Z),
+                velocityThisFrame.Z, boundingBox.Front, boundingBox.Right, boundingBox.Top, Vector3.Right,
+                Vector3.Up, skinWidthHalf, out hitInfo);
+            
+            _isCamGrounded = false;
+            if (CollideAndSlide(boundingBox, boundingBox.Center, Vector3.Up, (int)MathF.Sign(_playerVelocity.Y),
+                    velocityThisFrame.Y, boundingBox.Top, boundingBox.Right, boundingBox.Front, Vector3.Right,
+                    Vector3.Forward, skinWidthHalf, out hitInfo))
             {
-                AABB boundingBox = new AABB(CamPos + Vector3.Down * (PlayerHeight * 0.5f),
-                    new Vector3(0.6f, PlayerHeight, 0.6f));
-                
-                if (_playerVelocity.X > 0)
+                if (MathF.Sign(velocityThisFrame.Y) < 0)
                 {
-                    Vector3 right = boundingBox.Center + Vector3.Right * boundingBox.Right;
-                    
-                    Vector3 rightVoxelPos = Vector3.Floor(right + Vector3.Right * velocityThisFrame.X);
-                    int rightIndex = VoxelWorld.GetVoxel(rightVoxelPos);
-                    if (rightIndex > 0)
-                    {
-                        CamPos.X = rightVoxelPos.X - (boundingBox.Size.X * 0.5f);
-                        _playerVelocity.X = 0;
-                    }
+                    _isCamGrounded = true;
                 }
             }
 
@@ -365,6 +375,53 @@ namespace VoxelEngine
 
             // Convert the list to an array before returning.
             return positions.ToArray();
+        }
+
+        public bool CollideAndSlide(AABB boundingBox, Vector3 center, Vector3 direction, int directionSign, float distance, float mainAxisSpan, float span1, float span2, Vector3 span1Dir, Vector3 span2Dir, float skinWidthHalf, out VoxelWorld.RaycastVoxelHitInfo hitInfo)
+        {
+            bool result = false;
+            VoxelWorld.RaycastVoxelHitInfo resultHitInfo = new VoxelWorld.RaycastVoxelHitInfo();
+            
+            direction = new Vector3(MathF.Abs(direction.X), MathF.Abs(direction.Y), MathF.Abs(direction.Z));
+            span1Dir = new Vector3(MathF.Abs(span1Dir.X), MathF.Abs(span1Dir.Y), MathF.Abs(span1Dir.Z));
+            span2Dir = new Vector3(MathF.Abs(span2Dir.X), MathF.Abs(span2Dir.Y), MathF.Abs(span2Dir.Z));
+            if (directionSign != 0)
+            {
+                int rayDir = directionSign;
+                for (float yOff = -span1; yOff <= span1; yOff += (span1 * 2f) * 0.25f)
+                for (float zOff = -span2; zOff <= span2; zOff += (span2 * 2f) * 0.25f)
+                {
+                    Vector3 rayStartPos = center + direction * mainAxisSpan * rayDir;
+                    rayStartPos += direction * -(skinWidthHalf * rayDir);
+                    rayStartPos += span1Dir * yOff;
+                    rayStartPos += span2Dir * zOff;
+
+                    VoxelWorld.PerformRaycast(rayStartPos, direction * rayDir,
+                        MathF.Abs(distance) + skinWidthHalf,
+                        (hitInfo) =>
+                        {
+                            if (hitInfo.Distance < skinWidthHalf) return;
+                            Vector3 blockPosWorldCenter = hitInfo.BlockPosWorld + Vector3.One * 0.5f;
+
+                            float blockPosWorldCenterAxis = Vector3.Dot(blockPosWorldCenter, direction);
+                            // Calculate the difference between the signed magnitudes of position2 and positionVector
+                            float magnitudeDifference = Vector3.Dot(center, direction) - blockPosWorldCenterAxis + (0.5f + mainAxisSpan - skinWidthHalf) * rayDir;
+
+                            // Calculate the new aligned position2 by adjusting it along the cancelDirection axis
+                            Vector3 alignedPosition2 = center - magnitudeDifference * direction;
+                            CamPos = alignedPosition2 - (Vector3.Up * boundingBox.Size.Y * 0.5f) + (Vector3.Up * PlayerCamHeight);
+                            
+                            Vector3 resultingVelocity = _playerVelocity - (Vector3.Dot(_playerVelocity, direction)) * direction;
+                            _playerVelocity = resultingVelocity;
+
+                            resultHitInfo = hitInfo;
+                            result = true;
+                        });
+                }
+            }
+
+            hitInfo = resultHitInfo;
+            return result;
         }
     }
 }
