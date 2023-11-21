@@ -28,6 +28,7 @@ public class VoxelWorld
 
     private Queue<ChunkCoord> _chunksToGenerate = new Queue<ChunkCoord>();
     private Queue<ChunkCoord> _chunksToRefresh = new Queue<ChunkCoord>();
+    private Queue<ChunkCoord> _chunksToRefreshUser = new Queue<ChunkCoord>();
 
     public VoxelWorld(GraphicsDevice graphicsDevice)
     {
@@ -54,6 +55,7 @@ public class VoxelWorld
 
         Task.Factory.StartNew(AsyncChunkGenerationTask);
         Task.Factory.StartNew(AsyncChunkMeshingTask);
+        Task.Factory.StartNew(AsyncChunkMeshingUserTask);
 
         // GenerateAllChunks();
     }
@@ -109,7 +111,7 @@ public class VoxelWorld
             if (_chunksToGenerate.TryDequeue(out var chunkToGenerate))
             {
                 Chunks[chunkToGenerate].GenerateVoxelMap();
-                _chunksToRefresh.Enqueue(chunkToGenerate);
+                RefreshChunkGenerated(chunkToGenerate);
             }
             await Task.Yield();
         }
@@ -117,11 +119,28 @@ public class VoxelWorld
     
     private async Task AsyncChunkMeshingTask()
     {
+        int loopCount = 3;
         while (true)
         {
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < loopCount; i++)
             {
                 if (_chunksToRefresh.TryDequeue(out var chunkToRefresh))
+                {
+                    Chunks[chunkToRefresh].CreateMesh();
+                }
+            }
+            await Task.Yield();
+        }
+    }
+    
+    private async Task AsyncChunkMeshingUserTask()
+    {
+        int loopCount = 6;
+        while (true)
+        {
+            for (int i = 0; i < loopCount; i++)
+            {
+                if (_chunksToRefreshUser.TryDequeue(out var chunkToRefresh))
                 {
                     Chunks[chunkToRefresh].CreateMesh();
                 }
@@ -181,19 +200,19 @@ public class VoxelWorld
         Vector3Int posInChunk = new Vector3Int(worldPos) % VoxelData.chunkSize;
         return chunk.GetVoxel(posInChunk);
     }
+    
+    public void RefreshChunkGenerated(ChunkCoord coord)
+    {
+        if (!IsChunkInWorld(coord)) return;
+        if (_chunksToRefresh.Contains(coord)) return;
+        _chunksToRefresh.Enqueue(coord);
+    }
 
     public void RefreshChunk(ChunkCoord coord)
     {
         if (!IsChunkInWorld(coord)) return;
-        _chunksToRefresh.Enqueue(coord);
-    }
-
-    public Chunk GetChunk(Vector3 pos)
-    {
-        int x = (pos.X / VoxelData.chunkSize.X).FloorToInt();
-        int y = (pos.Y / VoxelData.chunkSize.Y).FloorToInt();
-        int z = (pos.Z / VoxelData.chunkSize.Z).FloorToInt();
-        return Chunks[new ChunkCoord(pos)] as Chunk;
+        if (_chunksToRefreshUser.Contains(coord)) return;
+        _chunksToRefreshUser.Enqueue(coord);
     }
 
     public bool TryGetChunk(ChunkCoord chunkCoord, [MaybeNullWhen(false)] out Chunk chunk)
@@ -234,11 +253,6 @@ public class VoxelWorld
         return (chunkCoord.X >= 0 && chunkCoord.X < VoxelData.WorldSizeChunks.X) &&
                (chunkCoord.Y >= 0 && chunkCoord.Y < VoxelData.WorldSizeChunks.Y) &&
                (chunkCoord.Z >= 0 && chunkCoord.Z < VoxelData.WorldSizeChunks.Z);
-    }
-
-    public bool IsChunkInWorld(Vector3 chunkCoordVector3)
-    {
-        return IsChunkInWorld(new ChunkCoord(chunkCoordVector3));
     }
     
     public void PerformRaycast(Vector3 origin, Vector3 direction, double radius,

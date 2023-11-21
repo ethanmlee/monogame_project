@@ -182,6 +182,8 @@ public class Chunk
 
     private void UpdateBlocks()
     {
+        if (!IsGenerated) return;
+        
         var result = new VertexPositionColor[VoxelData.ChunkSizeTotal * 24];
         int vertStride = 6 * 4;
         int totalVerts = 0;
@@ -379,9 +381,9 @@ public readonly struct ChunkCoord
     {
         var posInt = new Vector3Int(pos.X.RoundToInt(), pos.Y.RoundToInt(), pos.Z.RoundToInt());
 
-        X = posInt.X / VoxelData.chunkSize.X;
-        Y = posInt.Y / VoxelData.chunkSize.Y;
-        Z = posInt.Z / VoxelData.chunkSize.Z;
+        X = posInt.X;
+        Y = posInt.Y;
+        Z = posInt.Z;
     }
 }
 

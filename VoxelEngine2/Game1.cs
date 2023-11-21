@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -54,7 +55,7 @@ namespace VoxelEngine
         public static readonly float GravityMoon =     1.62f;
         public static readonly float JumpVelocityEarthAverage = 3.77f; // 28 inches peak jump height on Earth
         public static readonly float JumpVelocityEarthOneMeter = 4.42944691807002f;
-        public static readonly float PlayerHeight = 2.7f;
+        public static readonly float PlayerHeight = 2.5f;
 
         public static KeyboardStateExtended KeyboardState;
         public static MouseStateExtended MouseState;
@@ -71,19 +72,25 @@ namespace VoxelEngine
 
         protected override void Initialize()
         {
+            // _graphics.PreferredBackBufferWidth = 512;
+            // _graphics.PreferredBackBufferHeight = 288;
             _graphics.PreferredBackBufferWidth *= 4;
             _graphics.PreferredBackBufferHeight *= 4;
-            _graphics.SynchronizeWithVerticalRetrace = true;
+            // _graphics.SynchronizeWithVerticalRetrace = true;
+            _graphics.IsFullScreen = true;
+            _graphics.HardwareModeSwitch = false;
             IsFixedTimeStep = true;
             _graphics.ApplyChanges();
-            ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(60), (float)_graphics.PreferredBackBufferWidth / (float)_graphics.PreferredBackBufferHeight, 0.1f, 1000f);
+            ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), (float)_graphics.PreferredBackBufferWidth / (float)_graphics.PreferredBackBufferHeight, 0.1f, 1000f);
             
             
             MouseExtended.SetPosition(_startMousePoint);
             IsMouseVisible = false;
 
             GuiRenderer = new ImGuiRenderer(this);
-            ImGui.GetIO().ConfigFlags = ImGuiConfigFlags.DockingEnable;
+            ImGui.GetIO().ConfigFlags = ImGuiConfigFlags.DockingEnable | 
+                                        ImGuiConfigFlags.DpiEnableScaleFonts |
+                                        ImGuiConfigFlags.DpiEnableScaleViewports;
 
             base.Initialize();
         }
@@ -112,7 +119,7 @@ namespace VoxelEngine
                 HandlePlayerInput(gameTime);
                 HandlePlayerPhysics(gameTime);
             }
-            
+
             if (KeyboardState.WasKeyJustDown(Keys.Escape)) ShowDebugOverlay = !ShowDebugOverlay;
             
             VoxelWorld.Update();
@@ -149,15 +156,28 @@ namespace VoxelEngine
             if (!ShowDebugOverlay) return;
             
             GuiRenderer.BeginLayout(gameTime);
-            ImGui.DockSpaceOverViewport(null, ImGuiDockNodeFlags.PassthruCentralNode);
-            
-            ImGui.BeginMainMenuBar();
-            
-            ImGui.EndMainMenuBar();
-            
+            ImGui.GetIO().FontGlobalScale = 2;
+            ImGui.DockSpaceOverViewport(null, 
+                ImGuiDockNodeFlags.PassthruCentralNode | ImGuiDockNodeFlags.NoDockingInCentralNode);
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("VoxelEngine"))
+                {
+                    if (ImGui.Button("Quit"))
+                    {
+                        Exit();
+                    }
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMainMenuBar();
+            }
+
             ImGui.Begin("Stats");
                 ImGui.Text("Mem: " + (GC.GetTotalMemory(true) / 1000000));
                 ImGui.Text("FPS: " + 1000f / gameTime.ElapsedGameTime.TotalMilliseconds);
+                ImGui.Spacing();
+                ImGui.Text($"Font Size: {ImGui.GetFont().FontSize}");
             ImGui.End();
             
             ImGui.Begin("Tools");
@@ -227,7 +247,11 @@ namespace VoxelEngine
                 _selectionCube.Position = hitInfo.BlockPosWorld + Vector3.One * 0.5f;
                 if (MouseState.WasButtonJustDown(MouseButton.Right))
                 {
-                    VoxelWorld.SetVoxel(hitInfo.BlockPos + hitInfo.FaceDirection, 1);
+                    Vector3 newBlockPos = hitInfo.BlockPos + hitInfo.FaceDirection;
+                    foreach (Vector3 spherePosition in GenerateSpherePositions(newBlockPos, _brushSize - 1))
+                    {
+                        VoxelWorld.SetVoxel(spherePosition, 1);
+                    }
                 }
                 if (MouseState.WasButtonJustDown(MouseButton.Left))
                 {
@@ -294,7 +318,6 @@ namespace VoxelEngine
                 
                 if (_playerVelocity.X > 0)
                 {
-                    
                     Vector3 right = boundingBox.Center + Vector3.Right * boundingBox.Right;
                     
                     Vector3 rightVoxelPos = Vector3.Floor(right + Vector3.Right * velocityThisFrame.X);
@@ -314,6 +337,32 @@ namespace VoxelEngine
             BoundingFrustum.Matrix = ViewMatrix * ProjectionMatrix;
         }
         
-        // public void CollideAndSlide
+        public Vector3[] GenerateSpherePositions(Vector3 center, float radius)
+        {
+            // Create a list to store positions.
+            List<Vector3> positions = new List<Vector3>();
+
+            int radiusCeiling = (int)Math.Ceiling(radius);
+
+            for (int x = (int)Math.Floor(center.X) - radiusCeiling; x <= (int)Math.Floor(center.X) + radiusCeiling; x++)
+            {
+                for (int y = (int)Math.Floor(center.Y) - radiusCeiling; y <= (int)Math.Floor(center.Y) + radiusCeiling; y++)
+                {
+                    for (int z = (int)Math.Floor(center.Z) - radiusCeiling; z <= (int)Math.Floor(center.Z) + radiusCeiling; z++)
+                    {
+                        Vector3 position = new Vector3(x, y, z);
+                        float distance = Vector3.Distance(position, center);
+
+                        if (distance <= radius)
+                        {
+                            positions.Add(position);
+                        }
+                    }
+                }
+            }
+
+            // Convert the list to an array before returning.
+            return positions.ToArray();
+        }
     }
 }
