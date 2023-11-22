@@ -405,7 +405,7 @@ namespace VoxelEngine
 
                             float blockPosWorldCenterAxis = Vector3.Dot(blockPosWorldCenter, direction);
                             // Calculate the difference between the signed magnitudes of position2 and positionVector
-                            float magnitudeDifference = Vector3.Dot(center, direction) - blockPosWorldCenterAxis + (0.5f + mainAxisSpan - skinWidthHalf) * rayDir;
+                            float magnitudeDifference = Vector3.Dot(center, direction) - blockPosWorldCenterAxis + (0.5f + mainAxisSpan) * rayDir;
 
                             // Calculate the new aligned position2 by adjusting it along the cancelDirection axis
                             Vector3 alignedPosition2 = center - magnitudeDifference * direction;

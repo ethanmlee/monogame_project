@@ -74,7 +74,10 @@ public class Chunk
 
         var loopOffset = Vector3.Round((Game1.CamPos - _position) / (VoxelData.chunkSize * VoxelData.WorldSizeChunks)) * (VoxelData.chunkSize * VoxelData.WorldSizeChunks);
         loopOffset.Y = 0;
+        
         Vector3 newPos = _position + loopOffset;
+        if ((newPos - Game1.CamPos.XZ()).Length() > (VoxelData.RenderDistance * VoxelData.chunkSize.X) * 0.5f) return;
+        
         var bounding = new BoundingBox(newPos, newPos + VoxelData.chunkSize);
         if (Game1.BoundingFrustum.Contains(bounding) == ContainmentType.Disjoint) return;
 

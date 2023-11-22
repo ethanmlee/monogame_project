@@ -31,6 +31,7 @@ public class ModelBasic
     public readonly EffectParameter ParamWorldMatrix;
     public readonly EffectParameter ParamViewMatrix;
     public readonly EffectParameter ParamProjectionMatrix;
+    public readonly EffectParameter VertWobbleAmount; 
 
     public ModelBasic(GraphicsDevice graphicsDevice, ContentManager contentManager, string modelPath, string texturePath = "", bool useIncludedTexture = false, Color? diffuseColor = null, bool isUnlit = false)
     {
@@ -90,6 +91,7 @@ public class ModelBasic
         ParamWorldMatrix = _myEffect.Parameters["_WorldMatrix"];
         ParamViewMatrix = _myEffect.Parameters["_ViewMatrix"];
         ParamProjectionMatrix = _myEffect.Parameters["_ProjectionMatrix"];
+        VertWobbleAmount = _myEffect.Parameters["_VertWobbleAmount"];
     }
 
     public void SetBrightness(float brightness)
@@ -105,6 +107,7 @@ public class ModelBasic
         
         ParamViewMatrix.SetValue(viewMatrix);
         ParamProjectionMatrix.SetValue(projectionMatrix);
+        VertWobbleAmount.SetValue(0.0f);
         
         foreach (ModelMesh mesh in Model.Meshes)
         {

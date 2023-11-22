@@ -12,8 +12,8 @@ public static class VoxelData
     public static int ChunkSizeTotal => chunkSize.X * chunkSize.Y * chunkSize.Z;
     public const int WorldPlanarSizeChunks = 16;
     public const int WorldHeightChunks = 5;
-    public static readonly Vector3Int WorldSizeChunks = new Vector3Int(WorldPlanarSizeChunks,WorldHeightChunks,WorldPlanarSizeChunks);
-    public static readonly int RenderDistance = 8;
+    public static readonly Vector3Int WorldSizeChunks = new Vector3Int(WorldPlanarSizeChunks * 2,WorldHeightChunks,WorldPlanarSizeChunks);
+    public static readonly int RenderDistance = 16;
 
     public static readonly float lightFalloff = 0.075f;
 

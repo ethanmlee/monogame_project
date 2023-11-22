@@ -43,6 +43,8 @@ float3 lerpColors(float t)
     {
         result = lerp(color4, color5, smoothstep(0.75f, 1.0f, t));
     }
+    
+    result -= 0.4;
 
     return result;
 }

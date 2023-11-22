@@ -21,6 +21,8 @@ public class VoxelWorld
     public readonly EffectParameter ParamWorldMatrix;
     public readonly EffectParameter ParamViewMatrix;
     public readonly EffectParameter ParamProjectionMatrix;
+    public readonly EffectParameter VertWobbleAmount;
+    public readonly EffectParameter LightIntensity;
 
     public HashSet<ChunkCoord> ValidChunkCoords = new HashSet<ChunkCoord>();
 
@@ -36,6 +38,8 @@ public class VoxelWorld
         ParamWorldMatrix = Effect.Parameters["_WorldMatrix"];
         ParamViewMatrix = Effect.Parameters["_ViewMatrix"];
         ParamProjectionMatrix = Effect.Parameters["_ProjectionMatrix"];
+        VertWobbleAmount = Effect.Parameters["_VertWobbleAmount"];
+        LightIntensity = Effect.Parameters["_LightIntensity"];
 
         // Populate room map
         for (var x = 0; x < VoxelData.WorldSizeChunks.X; x++)
@@ -62,12 +66,13 @@ public class VoxelWorld
     public void GenerateValidChunks()
     {
         ChunkCoord camChunkCoord = GetChunkCoord(Game1.CamPos);
-        var newValidChunks = new HashSet<ChunkCoord>((int)Math.Pow(VoxelData.RenderDistance * 2, 3));
-        for (int y = -VoxelData.RenderDistance; y <= VoxelData.RenderDistance; y++)
-        for (int x = -VoxelData.RenderDistance; x <= VoxelData.RenderDistance; x++)
-        for (int z = -VoxelData.RenderDistance; z <= VoxelData.RenderDistance; z++)
+        var newValidChunks = new HashSet<ChunkCoord>((int)VoxelData.WorldSizeChunks.X * VoxelData.WorldSizeChunks.Y *
+                                                     VoxelData.WorldSizeChunks.Z);
+        for (int y = 0; y <= VoxelData.WorldSizeChunks.Y; y++)
+        for (int x = 0; x <= VoxelData.WorldSizeChunks.X; x++)
+        for (int z = 0; z <= VoxelData.WorldSizeChunks.Z; z++)
         {
-            var newChunkCoord = new ChunkCoord(camChunkCoord.X + x, camChunkCoord.Y + y, camChunkCoord.Z + z);
+            var newChunkCoord = new ChunkCoord(x,  y,  z);
             if (!IsChunkInWorld(newChunkCoord)) continue;
             newValidChunks.Add(newChunkCoord);
         }
@@ -154,6 +159,8 @@ public class VoxelWorld
     {
         ParamViewMatrix.SetValue(Game1.ViewMatrix);
         ParamProjectionMatrix.SetValue(Game1.ProjectionMatrix);
+        VertWobbleAmount.SetValue(0.1f);
+        LightIntensity.SetValue(0.9f);
         EffectPass = Effect.CurrentTechnique.Passes[0];
         
         foreach (Chunk chunk in Chunks.Values)
@@ -330,8 +337,9 @@ public class VoxelWorld
             {
                 Vector3Int hitBlockPos = new Vector3Int(x, y, z);
                 Vector3Int hitBlockPosWorld = new Vector3Int(xWorld, yWorld, zWorld);
+                float distance = Vector3.Dot(origin - (hitBlockPosWorld + (Vector3.One * 0.5f) + (face * 0.5f)), face);
                 callback.Invoke(new RaycastVoxelHitInfo(hitBlockPos, hitBlockPosWorld, voxelId, face,
-                    Vector3.Distance(origin, hitBlockPos)));
+                    distance));
                 break;
             }
 
